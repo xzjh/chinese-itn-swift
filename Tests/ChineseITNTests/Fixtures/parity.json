@@ -98,6 +98,18 @@
   {
     "category": "cardinal_pure",
     "source": "WeText",
+    "input": "六十",
+    "expected": "60"
+  },
+  {
+    "category": "cardinal_pure",
+    "source": "WeText",
+    "input": "八十八",
+    "expected": "88"
+  },
+  {
+    "category": "cardinal_pure",
+    "source": "WeText",
     "input": "一百",
     "expected": "100"
   },
@@ -128,6 +140,30 @@
   {
     "category": "cardinal_pure",
     "source": "WeText",
+    "input": "二百",
+    "expected": "200"
+  },
+  {
+    "category": "cardinal_pure",
+    "source": "WeText",
+    "input": "三百",
+    "expected": "300"
+  },
+  {
+    "category": "cardinal_pure",
+    "source": "WeText",
+    "input": "九百九十九",
+    "expected": "999"
+  },
+  {
+    "category": "cardinal_pure",
+    "source": "WeText",
+    "input": "五百零三",
+    "expected": "503"
+  },
+  {
+    "category": "cardinal_pure",
+    "source": "WeText",
     "input": "一千",
     "expected": "1000"
   },
@@ -152,6 +188,24 @@
   {
     "category": "cardinal_pure",
     "source": "WeText",
+    "input": "一千一",
+    "expected": "1100"
+  },
+  {
+    "category": "cardinal_pure",
+    "source": "WeText",
+    "input": "九千九百九十九",
+    "expected": "9999"
+  },
+  {
+    "category": "cardinal_pure",
+    "source": "WeText",
+    "input": "三千五百",
+    "expected": "3500"
+  },
+  {
+    "category": "cardinal_pure",
+    "source": "WeText",
     "input": "一万",
     "expected": "10000"
   },
@@ -170,12 +224,6 @@
   {
     "category": "cardinal_pure",
     "source": "WeText",
-    "input": "一千一",
-    "expected": "1100"
-  },
-  {
-    "category": "cardinal_pure",
-    "source": "WeText",
     "input": "一万一",
     "expected": "11000"
   },
@@ -190,6 +238,54 @@
     "source": "WeText",
     "input": "一万零一",
     "expected": "10001"
+  },
+  {
+    "category": "cardinal_pure",
+    "source": "WeText",
+    "input": "两千五百万",
+    "expected": "2500万"
+  },
+  {
+    "category": "cardinal_pure",
+    "source": "WeText",
+    "input": "三百万",
+    "expected": "300万"
+  },
+  {
+    "category": "cardinal_pure",
+    "source": "WeText",
+    "input": "一千万",
+    "expected": "1000万"
+  },
+  {
+    "category": "cardinal_pure",
+    "source": "WeText",
+    "input": "一二三",
+    "expected": "123"
+  },
+  {
+    "category": "cardinal_pure",
+    "source": "WeText",
+    "input": "一二三四",
+    "expected": "1234"
+  },
+  {
+    "category": "cardinal_pure",
+    "source": "WeText",
+    "input": "一二三四五",
+    "expected": "12345"
+  },
+  {
+    "category": "cardinal_pure",
+    "source": "WeText",
+    "input": "二零二六",
+    "expected": "2026"
+  },
+  {
+    "category": "cardinal_pure",
+    "source": "WeText",
+    "input": "二零零八",
+    "expected": "2008"
   },
   {
     "category": "cardinal_in_sentence",
@@ -232,6 +328,18 @@
     "source": "WeText",
     "input": "我说一句话",
     "expected": "我说一句话"
+  },
+  {
+    "category": "cardinal_in_sentence",
+    "source": "WeText",
+    "input": "他一个人",
+    "expected": "他一个人"
+  },
+  {
+    "category": "cardinal_in_sentence",
+    "source": "WeText",
+    "input": "我们走了三天",
+    "expected": "我们走了三天"
   },
   {
     "category": "decimal",
@@ -306,6 +414,18 @@
     "expected": "101.05"
   },
   {
+    "category": "decimal",
+    "source": "WeText",
+    "input": "零点五",
+    "expected": "0.5"
+  },
+  {
+    "category": "decimal",
+    "source": "WeText",
+    "input": "九点八",
+    "expected": "9.8"
+  },
+  {
     "category": "time",
     "source": "WeText",
     "input": "下午三点",
@@ -366,6 +486,18 @@
     "expected": "凌晨3:30会有雨"
   },
   {
+    "category": "time",
+    "source": "WeText",
+    "input": "上午十点零五分",
+    "expected": "10:05a.m."
+  },
+  {
+    "category": "time",
+    "source": "WeText",
+    "input": "晚上十一点二十分",
+    "expected": "11:20p.m."
+  },
+  {
     "category": "money",
     "source": "WeText",
     "input": "五十块钱",
@@ -408,6 +540,18 @@
     "expected": "€200"
   },
   {
+    "category": "money",
+    "source": "WeText",
+    "input": "五百美元",
+    "expected": "$500"
+  },
+  {
+    "category": "money",
+    "source": "WeText",
+    "input": "三百英镑",
+    "expected": "£300"
+  },
+  {
     "category": "fraction",
     "source": "WeText",
     "input": "三分之二",
@@ -426,6 +570,18 @@
     "expected": "2%"
   },
   {
+    "category": "fraction",
+    "source": "WeText",
+    "input": "百分之五十",
+    "expected": "50%"
+  },
+  {
+    "category": "fraction",
+    "source": "WeText",
+    "input": "百分之九十九",
+    "expected": "99%"
+  },
+  {
     "category": "license_plate",
     "source": "WeText",
     "input": "京A幺二三四五",
@@ -442,6 +598,12 @@
     "source": "WeText",
     "input": "沪B九八七六五",
     "expected": "沪B98765"
+  },
+  {
+    "category": "license_plate",
+    "source": "WeText",
+    "input": "粤B五五五五五",
+    "expected": "粤B55555"
   },
   {
     "category": "whitelist",
@@ -478,6 +640,30 @@
     "source": "WeText",
     "input": "星期一开会",
     "expected": "星期一开会"
+  },
+  {
+    "category": "whitelist",
+    "source": "WeText",
+    "input": "他三言两语就说完了",
+    "expected": "他三言两语就说完了"
+  },
+  {
+    "category": "whitelist",
+    "source": "WeText",
+    "input": "一举两得",
+    "expected": "一举两得"
+  },
+  {
+    "category": "whitelist",
+    "source": "WeText",
+    "input": "一帆风顺",
+    "expected": "一帆风顺"
+  },
+  {
+    "category": "whitelist",
+    "source": "WeText",
+    "input": "万紫千红",
+    "expected": "万紫千红"
   },
   {
     "category": "telephone",
@@ -520,6 +706,12 @@
     "source": "combined (fixed WeText's bare-decimal-as-time misclassification)",
     "input": "内存占用四点零八G但是变成四点三三G了",
     "expected": "内存占用4.08G但是变成4.33G了"
+  },
+  {
+    "category": "mix",
+    "source": "WeText",
+    "input": "今天来了五十人开会下午三点半结束",
+    "expected": "今天来了50人开会3:30p.m.结束"
   },
   {
     "category": "date",
