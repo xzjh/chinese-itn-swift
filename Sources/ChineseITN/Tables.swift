@@ -34,8 +34,8 @@ let unitMap: [Character: Int] = [
 ]
 
 /// Whitelist: phrases that must never be transformed. From
-/// WeText's data/default/whitelist.tsv (82 entries) plus a few
-/// hush·hush-flavor expansions.
+/// WeText's data/default/whitelist.tsv plus a few common
+/// counter-expression additions.
 let whitelistTerms: [String] = [
     // From WeText whitelist.tsv (idioms + common collocations)
     "三七二十一", "一共", "一个", "一下", "一些", "一起", "一会",

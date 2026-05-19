@@ -138,32 +138,32 @@ final class WhitelistTests: XCTestCase {
     }
 }
 
-final class UserScenarioTests: XCTestCase {
+final class ScenarioTests: XCTestCase {
 
-    // Real ASR transcripts from production hush·hush dictation history
-    // that motivated this library. Each test is the verbatim raw input.
+    // Multi-sentence end-to-end scenarios exercising Decimal +
+    // Whitelist + Cardinal composition in one input.
 
-    func testCase1_decimalShort() {
-        let input = "我刚才启动之后内存占用四点零八G但是说完一句话之后变成四变成四点三三G了"
+    func testDecimalShortWithCounter() {
+        let input = "启动之后内存占用四点零八G但是说完一句话之后变成四点三三G"
         let out = ChineseITN.normalize(input)
         XCTAssertTrue(out.contains("4.08G"))
         XCTAssertTrue(out.contains("4.33G"))
-        XCTAssertTrue(out.contains("一句话"))   // counter expression preserved
+        XCTAssertTrue(out.contains("一句话"), "counter expression must be preserved: \(out)")
     }
 
-    func testCase2_decimalWithCounter() {
-        let input = "原来你是四点零八个G我说完之后你会变到四点三三个G"
+    func testDecimalWithCounter() {
+        let input = "原来是四点零八个G之后变到四点三三个G"
         let out = ChineseITN.normalize(input)
         XCTAssertTrue(out.contains("4.08个G"))
         XCTAssertTrue(out.contains("4.33个G"))
     }
 
-    func testCase3_bareDecimal() {
+    func testBareDecimal() {
         XCTAssertEqual(ChineseITN.normalize("三点二三"), "3.23")
     }
 
-    func testCase4_decimalWithG() {
-        let input = "为什么我的Activity Monitor里面显示的是四点三个G呢"
+    func testDecimalWithUnitG() {
+        let input = "屏幕上显示的是四点三个G"
         let out = ChineseITN.normalize(input)
         XCTAssertTrue(out.contains("4.3个G"))
     }

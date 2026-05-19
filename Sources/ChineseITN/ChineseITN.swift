@@ -14,10 +14,13 @@ public enum ChineseITN {
             // Order matters: more specific patterns first so they
             // claim their tokens before generic modules consume them.
             t = Electronic.normalize(t)
+            t = LicensePlate.normalize(t)
             t = DateNormalize.normalize(t)
             t = TimeNormalize.normalize(t)
+            t = MathNormalize.normalize(t)
             t = Fraction.normalize(t)
             t = Money.normalize(t)
+            t = Measure.normalize(t)
             t = Decimal.normalize(t)
             t = Cardinal.normalize(t)
             return t
