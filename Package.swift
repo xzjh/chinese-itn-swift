@@ -9,9 +9,14 @@ let package = Package(
     ],
     products: [
         .library(name: "ChineseITN", targets: ["ChineseITN"]),
+        .executable(name: "chinese-itn", targets: ["ChineseITNCLI"]),
     ],
     targets: [
         .target(name: "ChineseITN"),
+        .executableTarget(
+            name: "ChineseITNCLI",
+            dependencies: ["ChineseITN"]
+        ),
         .testTarget(
             name: "ChineseITNTests",
             dependencies: ["ChineseITN"],
