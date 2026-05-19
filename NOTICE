@@ -1,0 +1,38 @@
+ChineseITN
+Copyright 2026 xzjh
+
+This product includes software developed at the following third-party
+projects. Their work is reused as algorithmic reference and data tables.
+Their original Apache License 2.0 / MIT terms continue to apply to
+those portions.
+
+---
+
+WeTextProcessing
+Copyright Xingchen Song, Zhendong Peng, and the WeNet community.
+https://github.com/wenet-e2e/WeTextProcessing
+License: Apache License 2.0
+
+Cardinal / Decimal / Date / Time / Money / Fraction / Measure /
+LicensePlate / Math / Whitelist modules' algorithm and lookup data
+are ported from WeTextProcessing's itn/chinese/ Pynini grammars and
+TSV data files. The FST grammar is reimplemented as Swift regex +
+lookup tables; the data is reproduced verbatim.
+
+---
+
+fun_text_processing (FunASR)
+Copyright Alibaba DAMO Academy and the FunASR contributors.
+https://github.com/modelscope/FunASR
+License: MIT License
+
+Electronic (URL / email) module's algorithm is ported from
+fun_text_processing's inverse_text_normalization/zh/taggers/electronic.py.
+Date output format ("X年Y月Z日" with 年月日 separators) follows
+fun_text_processing's verbalizer style rather than WeTextProcessing's
+slash-separated output.
+
+---
+
+The Apache License 2.0 covers both ported portions and original work
+in this repository.
