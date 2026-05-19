@@ -517,9 +517,9 @@
   },
   {
     "category": "mix",
-    "source": "WeText",
+    "source": "combined (fixed WeText's bare-decimal-as-time misclassification)",
     "input": "内存占用四点零八G但是变成四点三三G了",
-    "expected": "内存占用4:08G但是变成4.33G了"
+    "expected": "内存占用4.08G但是变成4.33G了"
   },
   {
     "category": "date",
@@ -547,15 +547,15 @@
   },
   {
     "category": "date",
-    "source": "fun_text_processing",
+    "source": "combined (WeText coverage + fun format)",
     "input": "公元一六八年",
-    "expected": "公元一六八年"
+    "expected": "公元168年"
   },
   {
     "category": "date",
-    "source": "fun_text_processing",
+    "source": "combined (WeText coverage + fun format)",
     "input": "零八年奥运会",
-    "expected": "零八年奥运会"
+    "expected": "08年奥运会"
   },
   {
     "category": "electronic",

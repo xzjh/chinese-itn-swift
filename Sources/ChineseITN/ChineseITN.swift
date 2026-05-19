@@ -11,8 +11,13 @@ public enum ChineseITN {
     public static func normalize(_ text: String) -> String {
         Whitelist.protected(text) { protectedText in
             var t = protectedText
-            // Decimal must run BEFORE Cardinal, otherwise Cardinal's
-            // scanner consumes the X点Y as separate runs.
+            // Order matters: more specific patterns first so they
+            // claim their tokens before generic modules consume them.
+            t = Electronic.normalize(t)
+            t = DateNormalize.normalize(t)
+            t = TimeNormalize.normalize(t)
+            t = Fraction.normalize(t)
+            t = Money.normalize(t)
             t = Decimal.normalize(t)
             t = Cardinal.normalize(t)
             return t

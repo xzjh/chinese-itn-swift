@@ -24,12 +24,44 @@ enum Cardinal {
         if s.isEmpty { return nil }
         if s.allSatisfy({ digitChars.contains($0) }) {
             if s.count == 1 { return String(s) }   // single char stays
+            // WeText cardinal.py line ~92 recognizes specific
+            // digit-sequence lengths as standalone cardinals:
+            //   cardinal |= (digits**3 | digits**4 | digits**5
+            //                | digits**11 | (digits**17 + idcard)
+            //                | digits**18)
+            // Lengths 11 / 17+1 / 18 are Chinese mobile phone and
+            // ID-card-specific. When a sequence is longer (e.g. 15
+            // chars), WeText's FST picks the cheapest split using
+            // these length classes — typically (length-11) + 11
+            // when the prefix length is also valid (3-5).
+            if (14...16).contains(s.count) {
+                let prefixLen = s.count - 11
+                if (3...5).contains(prefixLen) {
+                    let chars = Array(s)
+                    let prefix = String(chars.prefix(prefixLen).map { digitMap[$0]! })
+                    let suffix = String(chars.suffix(11).map { digitMap[$0]! })
+                    return "\(prefix) \(suffix)"
+                }
+            }
             return String(s.map { digitMap[$0]! })  // digit-by-digit
         }
         if let kept = parseKeepingTenThousandSuffix(s) {
             return kept
         }
         return positionalValue(s).map(String.init)
+    }
+
+    /// Like `parse` but always returns an integer value. Single digit
+    /// chars convert too (一 → 1). Used by Time / Date / Money / Fraction
+    /// where we need a numeric value regardless of source form.
+    static func parseToInt(_ s: String) -> Int? {
+        if s.isEmpty { return nil }
+        if s.allSatisfy({ digitChars.contains($0) }) {
+            // Try digit-by-digit reading
+            let arabic = String(s.map { digitMap[$0]! })
+            return Int(arabic)
+        }
+        return positionalValue(s)
     }
 
     /// When the input ends with 万 and the prefix uses 百/千, keep
