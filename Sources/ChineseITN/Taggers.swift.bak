@@ -265,7 +265,7 @@ extension Money {
             while j < n && cnCardSet.contains(chars[j]) { j += 1 }
             let numValid: Bool = j > i && {
                 let numStr = String(chars[i..<j])
-                return Cardinal.parse(numStr, enableMillion: config.enableMillion) != nil
+                return Cardinal.parse(numStr) != nil
                     || (numStr.count == 1 && digitChars.contains(numStr.first!))
             }()
             if j > i && numValid {
@@ -1160,7 +1160,7 @@ extension Measure {
             if let d = digitMap[numStr.first!] {
                 valueStr = String(d)
             }
-        } else if let parsed = Cardinal.parse(numStr, enableMillion: config.enableMillion) {
+        } else if let parsed = Cardinal.parse(numStr) {
             valueStr = parsed
         } else if let intVal = Cardinal.parseToInt(numStr) {
             valueStr = "\(intVal)"
@@ -1308,13 +1308,6 @@ extension Cardinal {
     /// they yield lower total cost (e.g. "三百九十九三" → 399 + 3).
     static func tag(_ chars: [Character],
                     config: ChineseITNConfig) -> [Candidate] {
-        // WeText `enable_standalone_number=False`: the Cardinal tagger
-        // is dropped from the FST union entirely. Standalone cardinal
-        // expressions stay in Chinese. Measure / Money / Fraction etc.
-        // still emit their own candidates that internally consume
-        // cardinals, so unit-bound numbers still work.
-        if !config.enableStandaloneNumber { return [] }
-
         var out: [Candidate] = []
         let n = chars.count
         let cnCardSet = Set(cnCardinalClass)
@@ -1431,8 +1424,7 @@ extension Cardinal {
             }
             return nil  // single digit not allowed
         }
-        // Use enableMillion-aware parse for keep-万-suffix decision.
-        return parse(s, enableMillion: config.enableMillion)
+        return parse(s)
     }
 }
 
@@ -1558,6 +1550,6 @@ extension Decimal {
             // implies a quantitative read).
             return digitMap[ch].map(String.init)
         }
-        return Cardinal.parse(s, enableMillion: config.enableMillion)
+        return Cardinal.parse(s)
     }
 }

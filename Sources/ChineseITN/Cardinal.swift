@@ -19,34 +19,28 @@ enum Cardinal {
     /// - Single digit chars stay as-is ("一" → "一").
     /// - Pure digit sequence ≥2 chars: digit-by-digit ("二零二六" → "2026").
     /// - Has unit chars: positional reading.
-    /// - Coefficient with 千/百 before 万 keeps 万 suffix ("两千五百万" → "2500万").
-    static func parse(_ s: String) -> String? {
+    /// - Coefficient with 千/百 before 万 keeps 万 suffix when
+    ///   `enableMillion=false` ("两千五百万" → "2500万"). When
+    ///   `enableMillion=true`, fully arabize ("两千五百万" → "25000000").
+    static func parse(_ s: String, enableMillion: Bool = false) -> String? {
         if s.isEmpty { return nil }
-        // IP-like form: pure-digit chars separated by 点. WeText
-        // cardinal.py line 153: `cardinal = digits.plus + (dot +
-        // digits.plus).plus` — multi-segment dotted digit string.
         if let ipForm = parseDottedDigits(s) {
             return ipForm
         }
         if s.allSatisfy({ digitChars.contains($0) }) {
-            // WeText cardinal.py: pure-digit cardinal only allowed at
-            // specific lengths: digits**3 | digits**4 | digits**5 |
-            // digits**11 | digits**18. Other lengths (2, 6-10, 12-17)
-            // are NOT valid standalone cardinals — would emit "93" for
-            // "九三" which is wrong.
-            // Single digit handled by caller (config-aware).
             if s.count == 1 { return String(s) }
             let allowedLengths: Set<Int> = [3, 4, 5, 11, 18]
             if allowedLengths.contains(s.count) {
                 return String(s.map { digitMap[$0]! })
             }
-            // 17 + "X"/"x" (ID card with check char) — handled in tag().
             return nil
         }
-        if let kept = parseKeepingTenThousandSuffix(s) {
+        // 亿 always splits as text (WeText FST always uses
+        // `accep("亿")`); 万 splitting is controlled by enableMillion.
+        if let kept = parseKeepingTenThousandSuffix(s, enableMillion: enableMillion) {
             return kept
         }
-        if let kept = parseMidWanSeparator(s) {
+        if !enableMillion, let kept = parseMidWanSeparator(s) {
             return kept
         }
         return positionalValue(s).map(String.init)
@@ -97,8 +91,11 @@ enum Cardinal {
     ///   "一亿七万两千三百"    → "1亿72300" (亿-trailing has its own 万 segment merged)
     /// "两千五百万" alone (no 亿, ends in 万) → "2500万".
     /// "三亿" → "3亿"; standalone "一亿" same (WeText official-config behavior).
-    private static func parseKeepingTenThousandSuffix(_ s: String) -> String? {
-        // 亿-split path: any cardinal containing 亿
+    private static func parseKeepingTenThousandSuffix(_ s: String,
+                                                      enableMillion: Bool) -> String? {
+        // 亿-split path: always keep 亿 as text marker.
+        // WeText cardinal.py always uses `accep("亿")` regardless of
+        // enable_million.
         if let yiIdx = s.firstIndex(where: { $0 == "亿" || $0 == "億" }) {
             let yiPrefix = String(s[..<yiIdx])
             let afterYi = String(s[s.index(after: yiIdx)...])
@@ -107,17 +104,15 @@ enum Cardinal {
             if afterYi.isEmpty {
                 return "\(yiVal)亿"
             }
-            // Trailing has 万? → recurse (gives "Y万Z" form)
-            // Strip a leading 零 if present (一亿零两千三百 form)
+            // Strip leading 零 (一亿零两千三百 form)
             var rest = afterYi
             if let firstChar = rest.first, firstChar == "零" || firstChar == "〇" {
                 rest = String(rest.dropFirst())
             }
             // Trailing positional: may include 万 segment
             if rest.contains("万") || rest.contains("萬") {
-                guard let tail = parseKeepingTenThousandSuffix(rest)
-                        ?? parseMidWanSeparator(rest) else {
-                    // Fallback: try positional value of full rest
+                guard let tail = parseKeepingTenThousandSuffix(rest, enableMillion: enableMillion)
+                        ?? (!enableMillion ? parseMidWanSeparator(rest) : nil) else {
                     guard let restVal = positionalValue(rest) else { return nil }
                     return "\(yiVal)亿\(restVal)"
                 }
@@ -126,13 +121,10 @@ enum Cardinal {
             guard let restVal = positionalValue(rest) else { return nil }
             return "\(yiVal)亿\(restVal)"
         }
-        // 万-trailing path: 两千五百万 → 2500万
+        // 万-trailing path — only active when !enableMillion.
+        if enableMillion { return nil }
         guard let last = s.last, last == "万" || last == "萬" else { return nil }
         let prefix = String(s.dropLast())
-        // Per WeText cardinal.py: ten_thousand prefix uses (teen|tens|digit)
-        // OR (under enable_million=true) (thousand|hundred|teen|tens|digit).
-        // Default config keeps 万 suffix only when prefix uses 百/千 — single
-        // digit "三万" would be ten_thousand path and emit full number.
         guard prefix.contains("百") || prefix.contains("千") else { return nil }
         guard let prefixVal = positionalValue(prefix) else { return nil }
         return "\(prefixVal)万"

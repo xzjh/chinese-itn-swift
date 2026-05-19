@@ -36,6 +36,8 @@ func parseArgs() -> ChineseITNConfig {
             cfg.removeInterjections = false
         case "--enable-million":
             cfg.enableMillion = true
+        case "--disable-standalone-number":
+            cfg.enableStandaloneNumber = false
         case "--help", "-h":
             print("""
             chinese-itn — Chinese Inverse Text Normalization CLI
@@ -46,11 +48,13 @@ func parseArgs() -> ChineseITNConfig {
             output line-per-line to stdout.
 
             Flags:
-              --enable-0-to-9     convert single 一..九, 零 standalone
-              --official-test     preset matching WeText official tests
-              --no-interjections  keep 呃/啊 fillers
-              --enable-million    千万/亿万 coefficient prefix
-              -h, --help          show this help
+              --enable-0-to-9            convert single 一..九, 零 standalone
+              --official-test            preset matching WeText official tests
+              --no-interjections         keep 呃/啊 fillers
+              --enable-million           千/百+万 fully arabize (vs keep 万 suffix)
+              --disable-standalone-number  don't convert bare cardinal expressions
+                                         (only convert when bound to unit/currency/etc)
+              -h, --help                 show this help
             """)
             exit(0)
         default:
