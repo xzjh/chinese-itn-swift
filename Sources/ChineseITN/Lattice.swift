@@ -1,6 +1,5 @@
 // Lattice.swift
-// Weighted token graph + shortest-path solver, replacing the previous
-// sequential regex pipeline.
+// Weighted token graph + shortest-path solver.
 //
 // Why this exists:
 //   WeTextProcessing composes all its taggers into a single Pynini FST
@@ -13,11 +12,9 @@
 //   (decimal+量词) over Time (4:08) because Measure can cover one more
 //   char (个) and the extra Char-cost outweighs Time's slight cost edge.
 //
-// Our previous regex pipeline ran each module in fixed order with
-// local heuristics (lookbehinds, lookaheads, ordering tweaks) to
-// approximate the FST's behavior. That worked for the test corpus
-// but didn't generalize — every new edge case needed a new heuristic.
-// This file replaces that with a faithful weighted-graph model.
+// This file is the Swift equivalent: a weighted DAG over input
+// positions, solved by topological-DP shortest-path. Each tagger
+// emits candidate edges; the solver picks the lowest-cost coverage.
 //
 // Algorithm:
 //   1. Each module is a "tagger": given the input string, it emits

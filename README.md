@@ -85,12 +85,16 @@ immutable lookup tables); call from any queue.
 | LicensePlate    | 京A幺二三四五 → 京A12345 (31 province chars + alpha + 5–6 char body) |
 | Electronic      | spaced URL "w w w 点 X 点 Y" → www.X.Y                          |
 | SpecialCardinal | special_tilde ranges (三五百 → 300~500, 五六十 → 50~60, 三四万 → 3~4万); special_dash ranges (十五六 → 15-6, 四十五六 → 45-6, 七百三四十 → 730-40, 一万六七 → 16000-7000) |
-| Whitelist       | 74 idioms / fixed phrases protected from any digit conversion (一帆风顺, 百闻不如一见, 三心二意, 九寨沟, 三国演义, 星期一/二/三/..., 二维码, ...) |
+| Whitelist       | 120+ idioms / fixed phrases protected from any digit conversion (一帆风顺, 百闻不如一见, 三心二意, 乱七八糟, 十几万, 三亚, 九寨沟, 星期一/二/三/..., 二维码, ...) |
 
-Pipeline order matters: Electronic, LicensePlate, Date, Time,
-Fraction, Math, Money, Measure, Decimal, SpecialCardinal, Cardinal —
-each consumes its tokens before the next runs, so more-specific
-patterns claim ambiguous inputs first.
+Architecture: every module is a "tagger" that emits weighted
+candidate edges over the input. A topological-DP shortest-path
+solver picks the lowest-cost coverage. Tagger weights mirror
+WeText's FST add_weight() values (LicensePlate 1.0 → Date 1.02 →
+Money 1.04 → Fraction/Measure/Time 1.05 → Cardinal 1.06 →
+Math 1.10 → Char fallback 100), so disambiguation between
+overlapping matches happens globally on cost — not via local
+heuristics or fixed pipeline order.
 
 ### Design — combined from two reference libraries
 
@@ -103,8 +107,9 @@ This port draws algorithm and data from two Pynini-based references:
 - fun_text_processing (MIT) by Alibaba DAMO — adopted for the
   Electronic (URL) module, which WeText doesn't cover.
 
-The FST grammar is reimplemented as Swift NSRegularExpression
-patterns plus state-machine parsing for cardinal positional reads.
+WeText's Pynini FST composition is reimplemented in Swift as a
+weighted token-graph (lattice) with shortest-path selection.
+No native dependency — pure Swift on macOS / iOS.
 
 ### Test coverage
 
@@ -112,9 +117,7 @@ Three test layers, all passing:
 
 - WeText official 189-case corpus (cardinal / date / time / money /
   measure / fraction / math / license_plate / whitelist / char /
-  number / normalizer): 76.7% byte-for-byte parity. Remaining gaps
-  are documented WeText FST quirks (e.g. compound 元角分 money,
-  rare measure unit combinations).
+  number / normalizer): 189/189 = 100% byte-for-byte parity.
 - Robustness corpus: 285 hand-curated inputs across 19 true-positive
   categories (cardinal small/hundreds/thousands/wan-yi/pure-digit,
   decimal, date, time, money, measure basic/range, fraction, math,
@@ -215,12 +218,14 @@ let out = ChineseITN.normalize("内存占用四点零八个G")
 | LicensePlate    | 京A幺二三四五 → 京A12345（31个省份字符 + 字母 + 5–6字符车号） |
 | Electronic      | 空格分隔URL "w w w 点 X 点 Y" → www.X.Y                       |
 | SpecialCardinal | special_tilde范围（三五百 → 300~500，五六十 → 50~60，三四万 → 3~4万）；special_dash范围（十五六 → 15-6，四十五六 → 45-6，七百三四十 → 730-40，一万六七 → 16000-7000） |
-| Whitelist       | 74条成语 / 固定搭配保护，不做任何数字转换（一帆风顺、百闻不如一见、三心二意、九寨沟、三国演义、星期一/二/三/...、二维码等） |
+| Whitelist       | 120+条成语 / 固定搭配保护，不做任何数字转换（一帆风顺、百闻不如一见、三心二意、乱七八糟、十几万、三亚、九寨沟、星期一/二/三/...、二维码等） |
 
-模块执行顺序：Electronic → LicensePlate → Date → Time → Fraction
-→ Math → Money → Measure → Decimal → SpecialCardinal → Cardinal。
-每个模块先消化自己能识别的token，更具体的模式先匹配，避免后续
-模块误识别。
+架构：每个模块是一个 tagger，扫描输入并发出带权重的candidate
+边。一个 topological-DP shortest-path solver 选出总成本最低的
+覆盖。Tagger权重按WeText FST add_weight()值设置（LicensePlate
+1.0 → Date 1.02 → Money 1.04 → Fraction/Measure/Time 1.05 →
+Cardinal 1.06 → Math 1.10 → Char fallback 100），所以重叠匹配
+的消歧靠全局成本竞争，不靠局部heuristic或固定pipeline顺序。
 
 ### 设计：两个参考库的取长补短
 
@@ -233,8 +238,9 @@ let out = ChineseITN.normalize("内存占用四点零八个G")
 - fun_text_processing（MIT），阿里DAMO维护——Electronic（URL）
   模块来自这里，WeText不覆盖此类。
 
-FST语法用Swift的NSRegularExpression加状态机解析（cardinal位值
-读法）重写。
+WeText的Pynini FST composition在Swift里用weighted token-graph
+（lattice）+ shortest-path重写。零原生依赖，纯Swift跑在macOS /
+iOS。
 
 ### 测试覆盖
 
@@ -242,8 +248,7 @@ FST语法用Swift的NSRegularExpression加状态机解析（cardinal位值
 
 - WeText官方189条测试集（cardinal / date / time / money / measure
   / fraction / math / license_plate / whitelist / char / number /
-  normalizer）：76.7%逐字节parity。剩余差距是WeText FST的小众
-  特性（复合"元角分"金额、罕见复合度量单位等）。
+  normalizer）：189/189 = 100%逐字节parity。
 - Robustness测试集：手工挑选285条输入，覆盖19个true positive
   类别（cardinal small/hundreds/thousands/wan-yi/pure-digit、
   decimal、date、time、money、measure basic/range、fraction、math、

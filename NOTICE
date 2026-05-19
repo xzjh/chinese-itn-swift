@@ -16,9 +16,12 @@ License: Apache License 2.0
 Cardinal / Decimal / Date / Time / Money / Fraction / Measure /
 LicensePlate / Math / SpecialCardinal / Whitelist modules' algorithm
 and lookup data are ported from WeTextProcessing's itn/chinese/
-Pynini grammars and TSV data files. The FST grammar is reimplemented
-as Swift regex + state-machine parsing; the data is reproduced
-verbatim. Date output uses WeText's slash form (2026/05/04).
+Pynini grammars and TSV data files. The FST composition is
+reimplemented as a Swift weighted token-graph (lattice) with
+shortest-path selection; per-tagger weights mirror WeText's
+add_weight() values. Lookup data (digits, units, hours, minutes,
+months, days, currencies, whitelist, etc.) is reproduced verbatim.
+Date output uses WeText's slash form (2026/05/04).
 
 ---
 

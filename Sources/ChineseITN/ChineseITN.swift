@@ -14,10 +14,9 @@
 //   5. Whitelist placeholders are restored.
 //   6. Optional filler removal (呃, 啊).
 //
-// This replaces the previous sequential rewrite pipeline. The big
-// win: there are no local heuristics deciding "should module X claim
-// this span or let module Y try" — that decision is made globally by
-// the cost-weighted DAG, mirroring WeText's Pynini FST composition.
+// No local heuristics decide "should module X claim this span or let
+// module Y try" — that decision is made globally by the cost-weighted
+// DAG, mirroring WeText's Pynini FST composition.
 
 import Foundation
 

@@ -3,11 +3,10 @@
 // emits zero or more Candidate edges with its associated weight.
 // The Lattice solver picks the lowest-cost coverage.
 //
-// Migration strategy: the legacy `Module.normalize(_:)` rewrites stay
-// for now (still used by some unit tests). The new `Module.tag(_:)`
-// functions duplicate the recognition logic but emit candidates
-// instead of doing rewrites. ChineseITN.normalize switches to use
-// taggers + lattice; legacy rewrites are deprecated.
+// The thin `Module.normalize(_:)` wrappers in each module file
+// delegate to lattice with just that module's tagger + Char fallback
+// — useful for testing one module in isolation. The full pipeline
+// is `ChineseITN.normalize`, which unions all taggers.
 
 import Foundation
 
