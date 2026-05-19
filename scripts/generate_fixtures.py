@@ -111,21 +111,11 @@ INPUTS_FUN = {
     ],
 }
 
-# "Best of both" overrides: cases where neither library's raw output
-# is what we want, so we hand-curate the expected value.
-OVERRIDES = {
-    # WeText leaves these unchanged; we adopt fun_text_processing's
-    # broader matching to convert. Format: keep year in arabic + 年.
-    ("date", "公元一六八年"): ("公元168年", "combined (WeText coverage + fun format)"),
-    ("date", "零八年奥运会"): ("08年奥运会", "combined (WeText coverage + fun format)"),
-    # WeText's FST misclassifies bare "四点零八G" as time "4:08"
-    # due to weighted ambiguity. We treat as decimal — the correct
-    # interpretation given the "G" unit context.
-    ("mix", "内存占用四点零八G但是变成四点三三G了"): (
-        "内存占用4.08G但是变成4.33G了",
-        "combined (fixed WeText's bare-decimal-as-time misclassification)",
-    ),
-}
+# Source-of-truth overrides: cases where neither library's raw
+# output matches our intended Swift behavior. Reserved for genuine
+# semantic improvements over a library bug, not for stylistic
+# preferences. (Currently empty — we target strict WeText parity.)
+OVERRIDES: dict[tuple[str, str], tuple[str, str]] = {}
 
 
 def main():

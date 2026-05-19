@@ -1,15 +1,25 @@
 // DateNormalize.swift
-// Year / Month / Day normalization. Output style follows
-// fun_text_processing's verbalizer:
+// Year / Month / Day normalization, matching WeTextProcessing
+// itn/chinese/rules/date.py output:
 //
-//   二零二六年五月四号 → 2026年05月04日
-//   五月四号           → 05月04日
-//   三月二十一日       → 03月21日
-//   二零二六年         → 2026年
+//   二零二六年五月四号    → 2026/05/04
+//   二零零八年八月        → 2008/08
+//   八月八日              → 08/08
+//   二零二六年            → 2026年   (year-only standalone keeps 年)
+//   公元一六八年          → 公元168年 (3-char year — WeText broader form)
 //
-// Year: 2-4 digit chars + 年 → keep 年 (year is digit-by-digit)
-// Month: 1-12 + 月 → zero-padded MM
-// Day: 1-31 + (日|号) → zero-padded DD, normalize 号 → 日
+// WeText date.py rules (lines 31-44):
+//   yyyy = digit + (digit | zero)**3  (4-char year)
+//   yyy  = digit + (digit | zero)**2  (3-char year, after 公元 etc.)
+//   yy   = (digit | zero)**2          (2-char year)
+//   year (followed by month): drop 年, replaced with "/" by verbalizer
+//   year_only (standalone): keep 年
+//   month / day verbalize as zero-padded "/"-separated
+//
+// Examples per WeText official test/data/date.txt:
+//   二零零八年八月八日 → 2008/08/08
+//   二零零八年        → 2008年
+//   两千零五年八月五号 → 2005年08/05  (mixed style, WeText edge case)
 
 import Foundation
 
@@ -17,52 +27,71 @@ enum DateNormalize {
 
     static func normalize(_ text: String) -> String {
         var t = text
-        t = normalizeYear(t)
-        t = normalizeMonth(t)
-        t = normalizeDay(t)
+        // Full Y/M/D first (so year doesn't consume in standalone form).
+        t = normalizeYearMonthDay(t)
+        t = normalizeYearMonth(t)
+        t = normalizeMonthDay(t)
+        t = normalizeYearOnly(t)
         return t
     }
 
-    /// Match 2-to-4 char digit-only sequence + 年.
-    /// Combines WeText's broader matching (handles "公元一六八年" 3-char
-    /// and "零八年" 2-char) with fun_text_processing's "X年" format
-    /// (year + 年 kept, no separator change).
+    /// Year + Month + Day → YYYY/MM/DD form.
+    private static let _ymdRE = try! NSRegularExpression(
+        pattern: "([\(cnDigitClass)]{2,4})年([\(cnCardinalClass)]+)月([\(cnCardinalClass)]+)(?:日|号|號)"
+    )
+    private static func normalizeYearMonthDay(_ text: String) -> String {
+        regexReplace(text, regex: _ymdRE) { match, ns in
+            let y = ns.substring(with: match.range(at: 1))
+            let m = ns.substring(with: match.range(at: 2))
+            let d = ns.substring(with: match.range(at: 3))
+            let yArabic = String(y.compactMap { digitMap[$0] })
+            guard let mInt = Cardinal.parseToInt(m), (1...12).contains(mInt),
+                  let dInt = Cardinal.parseToInt(d), (1...31).contains(dInt)
+            else { return ns.substring(with: match.range) }
+            return String(format: "%@/%02d/%02d", yArabic, mInt, dInt)
+        }
+    }
+
+    /// Year + Month → YYYY/MM (no day).
+    private static let _ymRE = try! NSRegularExpression(
+        pattern: "([\(cnDigitClass)]{2,4})年([\(cnCardinalClass)]+)月(?![\(cnCardinalClass)])"
+    )
+    private static func normalizeYearMonth(_ text: String) -> String {
+        regexReplace(text, regex: _ymRE) { match, ns in
+            let y = ns.substring(with: match.range(at: 1))
+            let m = ns.substring(with: match.range(at: 2))
+            let yArabic = String(y.compactMap { digitMap[$0] })
+            guard let mInt = Cardinal.parseToInt(m), (1...12).contains(mInt)
+            else { return ns.substring(with: match.range) }
+            return String(format: "%@/%02d", yArabic, mInt)
+        }
+    }
+
+    /// Month + Day standalone → MM/DD.
+    private static let _mdRE = try! NSRegularExpression(
+        pattern: "(?<![\(cnCardinalClass)年])([\(cnCardinalClass)]+)月([\(cnCardinalClass)]+)(?:日|号|號)"
+    )
+    private static func normalizeMonthDay(_ text: String) -> String {
+        regexReplace(text, regex: _mdRE) { match, ns in
+            let m = ns.substring(with: match.range(at: 1))
+            let d = ns.substring(with: match.range(at: 2))
+            guard let mInt = Cardinal.parseToInt(m), (1...12).contains(mInt),
+                  let dInt = Cardinal.parseToInt(d), (1...31).contains(dInt)
+            else { return ns.substring(with: match.range) }
+            return String(format: "%02d/%02d", mInt, dInt)
+        }
+    }
+
+    /// Year standalone (NOT followed by month) → YYYY年.
+    /// Matches 2-4 digit chars before 年.
     private static let _yearRE = try! NSRegularExpression(
-        pattern: "(?<![\(cnDigitClass)])([\(cnDigitClass)]{2,4})年"
+        pattern: "(?<![\(cnDigitClass)])([\(cnDigitClass)]{2,4})年(?![\(cnCardinalClass)0-9])"
     )
-    private static func normalizeYear(_ text: String) -> String {
+    private static func normalizeYearOnly(_ text: String) -> String {
         regexReplace(text, regex: _yearRE) { match, ns in
-            let cnPart = ns.substring(with: match.range(at: 1))
-            let arabic = String(cnPart.compactMap { digitMap[$0] })
-            return "\(arabic)年"
-        }
-    }
-
-    private static let _monthRE = try! NSRegularExpression(
-        pattern: "([\(cnCardinalClass)]+)月"
-    )
-    private static func normalizeMonth(_ text: String) -> String {
-        regexReplace(text, regex: _monthRE) { match, ns in
-            let cnPart = ns.substring(with: match.range(at: 1))
-            guard let n = Cardinal.parseToInt(cnPart),
-                  (1...12).contains(n) else {
-                return ns.substring(with: match.range)
-            }
-            return String(format: "%02d月", n)
-        }
-    }
-
-    private static let _dayRE = try! NSRegularExpression(
-        pattern: "([\(cnCardinalClass)]+)(日|号|號)"
-    )
-    private static func normalizeDay(_ text: String) -> String {
-        regexReplace(text, regex: _dayRE) { match, ns in
-            let cnPart = ns.substring(with: match.range(at: 1))
-            guard let n = Cardinal.parseToInt(cnPart),
-                  (1...31).contains(n) else {
-                return ns.substring(with: match.range)
-            }
-            return String(format: "%02d日", n)
+            let y = ns.substring(with: match.range(at: 1))
+            let yArabic = String(y.compactMap { digitMap[$0] })
+            return "\(yArabic)年"
         }
     }
 }

@@ -16,6 +16,9 @@ public enum ChineseITN {
             t = Electronic.normalize(t)
             t = LicensePlate.normalize(t)
             t = DateNormalize.normalize(t)
+            // Time MUST run before Decimal — "X点Y" is time when Y is
+            // in minute.tsv (e.g. "零八"=08); else falls through to
+            // Decimal. Matches WeText FST weighted priority.
             t = TimeNormalize.normalize(t)
             t = MathNormalize.normalize(t)
             t = Fraction.normalize(t)
