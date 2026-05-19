@@ -109,7 +109,7 @@ chinese-itn --official-test               # use the weTextOfficialTest preset
 | Module          | What it handles                                                 |
 | --------------- | --------------------------------------------------------------- |
 | Cardinal        | 一 / 十 / 百 / 千 / 万 / 亿 positional read; multi-segment kept (两千五百万 → 2500万, 三亿五千万 → 3亿5000万); pure-digit reads for 11-digit mobile, 18-digit ID card, 14–16 with 3–5 char prefix split (e.g. 加一二三四 + 11-digit) |
-| Decimal         | X点Y → X.Y, with optional 负 sign                                |
+| Decimal         | X点Y → X.Y, with optional 负 sign; symmetric X杠Y → X-Y for identifier / range pattern (三杠二十三 → 3-23, 一杠二 → 1-2) |
 | Date            | 年月日 → YYYY/MM/DD; 年月 → YYYY/MM; 月日 → MM/DD; standalone 年 kept (二零零八年 → 2008年); 公元X年 → 公元 + arabized year |
 | Time            | X点Y分 → HH:MM, X点Y分Z秒 → HH:MM:SS, X点半 → HH:30, noon prefix (上午/早上/早晨 → a.m., 下午/晚上/傍晚 → p.m.) |
 | Money           | 元 / 美元 / 欧元 / 英镑 / 港元 / 日元 etc. → symbol or code prefix (¥ $ € £ HKD JPY ...) |
@@ -275,7 +275,7 @@ chinese-itn --official-test               # 用weTextOfficialTest preset
 | 模块             | 处理范围                                                       |
 | --------------- | ------------------------------------------------------------ |
 | Cardinal        | 一 / 十 / 百 / 千 / 万 / 亿 位读法；多段保留万/亿（两千五百万 → 2500万，三亿五千万 → 3亿5000万）；纯数字串处理11位手机号、18位身份证、14–16位带3–5字符前缀切分（如"加一二三四"+11位号码） |
-| Decimal         | X点Y → X.Y，可选"负"号                                         |
+| Decimal         | X点Y → X.Y，可选"负"号；对称的X杠Y → X-Y identifier/range形态（三杠二十三 → 3-23，一杠二 → 1-2） |
 | Date            | 年月日 → YYYY/MM/DD；年月 → YYYY/MM；月日 → MM/DD；独立"年"保留（二零零八年 → 2008年）；公元X年 → 公元 + 阿拉伯数字 |
 | Time            | X点Y分 → HH:MM，X点Y分Z秒 → HH:MM:SS，X点半 → HH:30，上下午前缀（上午/早上/早晨 → a.m.，下午/晚上/傍晚 → p.m.） |
 | Money           | 元 / 美元 / 欧元 / 英镑 / 港元 / 日元等 → 符号或代码前缀（¥ $ € £ HKD JPY ...） |

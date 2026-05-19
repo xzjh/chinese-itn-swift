@@ -1469,32 +1469,61 @@ extension Decimal {
             if j == intStart || j >= n {
                 i += 1; continue
             }
-            if chars[j] != "点" && chars[j] != "點" {
+            // Separator is either 点 (decimal) or 杠 (identifier/range).
+            // The right-side scan and emit format differ per separator,
+            // but the int-side and lattice-emission boilerplate is the
+            // same — both are X<sep>Y forms anchored by the separator
+            // and produce Arabic <X><joiner><Y> output.
+            let sep = chars[j]
+            let isDecimal = (sep == "点" || sep == "點")
+            let isDash = (sep == "杠")
+            if !isDecimal && !isDash {
                 i += 1; continue
             }
-            let dotIdx = j
-            // Fractional: one or more cnDigit chars
-            var k = dotIdx + 1
-            while k < n && cnDigitSet.contains(chars[k]) { k += 1 }
-            if k == dotIdx + 1 {
+            let sepIdx = j
+            // Right side: digit-only for decimal (matches WeText
+            // `(dot + digits.plus)`), full cnCard for dash (so
+            // "三杠二十三" → "3-23" with positional 23).
+            let rightCharSet = isDecimal ? cnDigitSet : cnCardSet
+            var k = sepIdx + 1
+            while k < n && rightCharSet.contains(chars[k]) { k += 1 }
+            if k == sepIdx + 1 {
                 i += 1; continue
             }
 
-            // Build int part and try multiple prefix lengths
-            let intStrFull = String(chars[intStart..<dotIdx])
-            let fracStrFull = String(chars[(dotIdx + 1)..<k])
+            let intStrFull = String(chars[intStart..<sepIdx])
+            let rightStrFull = String(chars[(sepIdx + 1)..<k])
 
-            // Standard decimal: full int + full frac
             if let intVal = parseIntFlexible(intStrFull, config: config) {
-                let fracDigits = fracStrFull.compactMap { digitMap[$0] }
-                if fracDigits.count == fracStrFull.count {
-                    out.append(Candidate(
-                        startIdx: i,
-                        endIdx: k,
-                        output: "\(signOut)\(intVal).\(String(fracDigits))",
-                        weight: TaggerWeight.cardinal,  // decimal is part of cardinal in WeText
-                        source: "decimal"
-                    ))
+                if isDecimal {
+                    let fracDigits = rightStrFull.compactMap { digitMap[$0] }
+                    if fracDigits.count == rightStrFull.count {
+                        out.append(Candidate(
+                            startIdx: i,
+                            endIdx: k,
+                            output: "\(signOut)\(intVal).\(String(fracDigits))",
+                            weight: TaggerWeight.cardinal,
+                            source: "decimal"
+                        ))
+                    }
+                } else {
+                    // X杠Y dash form. Right side: try positional /
+                    // multi-char cardinal first (e.g. 二十三 → 23);
+                    // if that fails, try digit-stream (e.g. 一二 → 12,
+                    // for ASR-style version numbers).
+                    let rightVal = parseIntFlexible(rightStrFull, config: config)
+                        ?? (rightStrFull.allSatisfy { digitChars.contains($0) }
+                            ? String(rightStrFull.compactMap { digitMap[$0] })
+                            : nil)
+                    if let r = rightVal {
+                        out.append(Candidate(
+                            startIdx: i,
+                            endIdx: k,
+                            output: "\(signOut)\(intVal)-\(r)",
+                            weight: TaggerWeight.cardinal,
+                            source: "dash_connector"
+                        ))
+                    }
                 }
             }
 
@@ -1549,8 +1578,8 @@ extension Decimal {
     /// Parse an integer-side cardinal allowing single digits when
     /// `enable_0_to_9` is true, else only multi-char (matches WeText
     /// number / number_exclude_0_to_9 used by Decimal context).
-    private static func parseIntFlexible(_ s: String,
-                                         config: ChineseITNConfig) -> String? {
+    static func parseIntFlexible(_ s: String,
+                                 config: ChineseITNConfig) -> String? {
         if s.count == 1, let ch = s.first, digitChars.contains(ch) {
             // Decimals always allow single-digit int side (matches WeText
             // cardinal.py — number includes digits when assembled with
@@ -1561,3 +1590,4 @@ extension Decimal {
         return Cardinal.parse(s, enableMillion: config.enableMillion)
     }
 }
+
