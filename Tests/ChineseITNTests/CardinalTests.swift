@@ -22,7 +22,10 @@ final class CardinalTests: XCTestCase {
     }
 
     func testParseDigitSequence() {
-        XCTAssertEqual(Cardinal.parse("一一"), "11")
+        // WeText cardinal.py restricts pure-digit reads to lengths
+        // {3, 4, 5, 11, 18}. Length 2 is NOT a valid standalone
+        // cardinal — would be special_tilde pair instead.
+        XCTAssertNil(Cardinal.parse("一一"))
         XCTAssertEqual(Cardinal.parse("二零二六"), "2026")
         XCTAssertEqual(Cardinal.parse("二零零八"), "2008")
         XCTAssertEqual(Cardinal.parse("一二三"), "123")
@@ -30,8 +33,15 @@ final class CardinalTests: XCTestCase {
     }
 
     func testParsePhoneNumberSplit() {
-        // 15-char digit run = 4-prefix + 11-phone, space separator.
-        XCTAssertEqual(Cardinal.parse("一二三四幺三八幺幺幺零零零零零"), "1234 13811100000")
+        // WeText concatenates multiple valid-length cardinals via
+        // `(insert(" ") + cardinal).star`. The Lattice solver in
+        // ChineseITN.normalize handles the multi-cardinal split;
+        // Cardinal.parse alone doesn't claim a 15-char compound run.
+        XCTAssertNil(Cardinal.parse("一二三四幺三八幺幺幺零零零零零"))
+        let out = ChineseITN.normalize("加一二三四幺三八幺幺幺零零零零零",
+                                       config: .weTextOfficialTest)
+        XCTAssertTrue(out.contains("1234"), "got: \(out)")
+        XCTAssertTrue(out.contains("13811100000"), "got: \(out)")
     }
 
     func testParsePositional() {
@@ -57,12 +67,44 @@ final class CardinalTests: XCTestCase {
         XCTAssertEqual(Cardinal.parse("一千二百三十四"), "1234")
     }
 
+    /// Smoke test for the new lattice + tagger architecture. Uses
+    /// only Cardinal + Decimal candidates plus Char fallback.
+    func testLatticeSmoke() {
+        let cases: [(String, ChineseITNConfig, String)] = [
+            ("一万两千三百", .weTextOfficialTest, "12300"),
+            ("一二三", .weTextOfficialTest, "123"),
+            ("我有五十块钱", .default, "我有50块钱"),  // 50 wins via Cardinal
+            ("三点一四", .default, "3.14"),
+            ("幺二七点零点零点幺", .default, "127.0.0.1"),
+            ("三百九十九三", .weTextOfficialTest, "3993"),
+            ("两千五百万", .default, "2500万"),
+            ("一", .weTextOfficialTest, "1"),  // single digit converts under official
+            ("一", .default, "一"),  // single digit stays under default
+        ]
+        for (input, cfg, expected) in cases {
+            let chars = Array(input)
+            var candidates: [Candidate] = []
+            candidates += Cardinal.tag(chars, config: cfg)
+            candidates += Decimal.tag(chars, config: cfg)
+            let actual = Lattice.bestPath(chars: chars, candidates: candidates)
+            if actual != expected {
+                print("DEBUG input=\(input) candidates:")
+                for c in candidates {
+                    print("  (\(c.startIdx),\(c.endIdx),'\(c.output)',w=\(c.weight),src=\(c.source))")
+                }
+            }
+            XCTAssertEqual(actual, expected, "input: \(input)")
+        }
+    }
+
     func testParseTenThousand() {
         XCTAssertEqual(Cardinal.parse("一万"), "10000")
         XCTAssertEqual(Cardinal.parse("两万"), "20000")
         XCTAssertEqual(Cardinal.parse("一万五千"), "15000")
         XCTAssertEqual(Cardinal.parse("一万一"), "11000")
         XCTAssertEqual(Cardinal.parse("一万五"), "15000")
+        XCTAssertEqual(Cardinal.parse("一万两千三百"), "12300")
+        XCTAssertEqual(ChineseITN.normalize("一万两千三百", config: .weTextOfficialTest), "12300")
     }
 
     func testParseKeptTenThousandSuffix() {

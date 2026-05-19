@@ -3,26 +3,21 @@
 // Ported from WeTextProcessing itn/chinese/rules/money.py +
 // data/money/symbol.tsv + data/money/code.tsv (Apache-2.0).
 //
-// WeText money tagger (money.py:34):
-//   tagger = number + currency(code|symbol) + decimal?
-//   verbalize = currency + value + decimal
-//
-// So "X<currency>" rearranges to "<symbol>X". Decimal form
-// "X元Y角Z分" → "<symbol>X.YZ".
+// Recognition logic lives in Taggers.swift (`Money.tag`).
 //
 // Examples:
-//   两百欧元        → €200
-//   一千美元        → $1000
-//   一点二五元      → ¥1.25
-//   三千三百八十元五角八分 → ¥3380.58 (TODO: not yet implemented)
+//   两百欧元         → €200
+//   一千美元         → USD1000   (integer prefers code)
+//   一点二五美元      → $1.25     (decimal prefers symbol)
+//   八九千美元       → $8000~9000 (range prefers symbol)
+//   一点二五元       → ¥1.25
+//   三千三百八十元五角八分 → ¥3380.58
 
 import Foundation
 
 enum Money {
 
-    /// WeText data/money/symbol.tsv — Chinese currency name to
-    /// symbol prefix. Subset adopting the unambiguous, common entries.
-    /// 元 included (per WeText official "价格是十三点五元" → "¥13.5").
+    /// WeText data/money/symbol.tsv — Chinese currency name to symbol.
     static let symbolPrefix: [String: String] = [
         "美元": "$",
         "英镑": "£",
@@ -58,15 +53,16 @@ enum Money {
         "南非兰特": "R",
         "津巴布韦元": "Z$",
         "尼加拉瓜科尔多瓦": "C$",
-        "元": "¥",      // last so longer matches like 欧元/美元 win
+        "元": "¥",
     ]
 
-    /// WeText data/money/code.tsv — names that get rewritten to a
-    /// 3-letter code instead of a single symbol.
+    /// WeText data/money/code.tsv — names rewritten to a code.
     static let codePrefix: [String: String] = [
+        "美元": "USD",
+        "英镑": "GBP",
         "澳元": "A$",
         "加元": "CAD",
-        "港元": "HK＄",
+        "港元": "HKD",
         "新台币": "TWD",
         "人民币": "CNY",
         "新加坡元": "SGD",
@@ -80,47 +76,13 @@ enum Money {
         "马来西亚令吉": "MYR",
     ]
 
-    /// Match `(cardinal or decimal)(currency suffix)` and rearrange.
-    private static let _re: NSRegularExpression = {
-        // Longest currency name first so 美元 beats 元.
-        let allCurrencies = Array(symbolPrefix.keys) + Array(codePrefix.keys)
-        let unique = Array(Set(allCurrencies))
-        let sorted = unique.sorted { $0.count > $1.count }
-        let alt = sorted.joined(separator: "|")
-        let numCardinal = "[\(cnCardinalClass)]+"
-        let numDecimal = "[\(cnCardinalClass)]+点[\(cnDigitClass)]+"
-        return try! NSRegularExpression(
-            pattern: "(\(numDecimal)|\(numCardinal))(\(alt))"
-        )
-    }()
+    /// Currencies that always render as symbol (even for plain integer).
+    static let symbolOnlyForInteger: Set<String> = ["英镑"]
 
-    static func normalize(_ text: String) -> String {
-        regexReplace(text, regex: _re) { match, ns in
-            let numStr = ns.substring(with: match.range(at: 1))
-            let currency = ns.substring(with: match.range(at: 2))
-            // Pick the right prefix table — symbol wins if both apply.
-            let prefix = symbolPrefix[currency] ?? codePrefix[currency]
-            guard let pre = prefix else {
-                return ns.substring(with: match.range)
-            }
-            // Decimal form
-            if let dotIdx = numStr.firstIndex(where: { $0 == "点" || $0 == "點" }) {
-                let intPart = String(numStr[..<dotIdx])
-                let fracPart = String(numStr[numStr.index(after: dotIdx)...])
-                guard let intVal = Cardinal.parseToInt(intPart) else {
-                    return ns.substring(with: match.range)
-                }
-                let fracDigits = fracPart.compactMap { digitMap[$0] }
-                guard fracDigits.count == fracPart.count else {
-                    return ns.substring(with: match.range)
-                }
-                return "\(pre)\(intVal).\(String(fracDigits))"
-            }
-            // Cardinal form: produce "PREFIX<int>" via Cardinal.parse
-            guard let n = Cardinal.parse(numStr) else {
-                return ns.substring(with: match.range)
-            }
-            return "\(pre)\(n)"
-        }
+    static func normalize(_ text: String,
+                          config: ChineseITNConfig = .default) -> String {
+        let chars = Array(text)
+        let candidates = Money.tag(chars, config: config)
+        return Lattice.bestPath(chars: chars, candidates: candidates)
     }
 }

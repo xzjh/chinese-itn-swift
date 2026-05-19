@@ -22,30 +22,31 @@ enum Cardinal {
     /// - Coefficient with 千/百 before 万 keeps 万 suffix ("两千五百万" → "2500万").
     static func parse(_ s: String) -> String? {
         if s.isEmpty { return nil }
+        // IP-like form: pure-digit chars separated by 点. WeText
+        // cardinal.py line 153: `cardinal = digits.plus + (dot +
+        // digits.plus).plus` — multi-segment dotted digit string.
+        if let ipForm = parseDottedDigits(s) {
+            return ipForm
+        }
         if s.allSatisfy({ digitChars.contains($0) }) {
-            if s.count == 1 { return String(s) }   // single char stays
-            // WeText cardinal.py line ~92 recognizes specific
-            // digit-sequence lengths as standalone cardinals:
-            //   cardinal |= (digits**3 | digits**4 | digits**5
-            //                | digits**11 | (digits**17 + idcard)
-            //                | digits**18)
-            // Lengths 11 / 17+1 / 18 are Chinese mobile phone and
-            // ID-card-specific. When a sequence is longer (e.g. 15
-            // chars), WeText's FST picks the cheapest split using
-            // these length classes — typically (length-11) + 11
-            // when the prefix length is also valid (3-5).
-            if (14...16).contains(s.count) {
-                let prefixLen = s.count - 11
-                if (3...5).contains(prefixLen) {
-                    let chars = Array(s)
-                    let prefix = String(chars.prefix(prefixLen).map { digitMap[$0]! })
-                    let suffix = String(chars.suffix(11).map { digitMap[$0]! })
-                    return "\(prefix) \(suffix)"
-                }
+            // WeText cardinal.py: pure-digit cardinal only allowed at
+            // specific lengths: digits**3 | digits**4 | digits**5 |
+            // digits**11 | digits**18. Other lengths (2, 6-10, 12-17)
+            // are NOT valid standalone cardinals — would emit "93" for
+            // "九三" which is wrong.
+            // Single digit handled by caller (config-aware).
+            if s.count == 1 { return String(s) }
+            let allowedLengths: Set<Int> = [3, 4, 5, 11, 18]
+            if allowedLengths.contains(s.count) {
+                return String(s.map { digitMap[$0]! })
             }
-            return String(s.map { digitMap[$0]! })  // digit-by-digit
+            // 17 + "X"/"x" (ID card with check char) — handled in tag().
+            return nil
         }
         if let kept = parseKeepingTenThousandSuffix(s) {
+            return kept
+        }
+        if let kept = parseMidWanSeparator(s) {
             return kept
         }
         return positionalValue(s).map(String.init)
@@ -57,23 +58,99 @@ enum Cardinal {
     static func parseToInt(_ s: String) -> Int? {
         if s.isEmpty { return nil }
         if s.allSatisfy({ digitChars.contains($0) }) {
-            // Try digit-by-digit reading
+            // WeText pure-digit cardinal is restricted to specific
+            // lengths (1, 3, 4, 5, 11, 18). Other lengths shouldn't
+            // be read as digit-by-digit cardinals (e.g. "七八" isn't
+            // 78 — it's a tilde range pair). Single digit always OK
+            // for caller (some callers use this for direct char read).
+            let allowedLengths: Set<Int> = [1, 3, 4, 5, 11, 18]
+            if !allowedLengths.contains(s.count) {
+                return nil
+            }
             let arabic = String(s.map { digitMap[$0]! })
             return Int(arabic)
         }
         return positionalValue(s)
     }
 
-    /// When the input ends with 万 and the prefix uses 百/千, keep
-    /// 万 as a readable suffix: "两千五百万" → "2500万".
-    private static func parseKeepingTenThousandSuffix(_ s: String) -> String? {
-        guard let last = s.last, last == "万" || last == "萬" else {
-            return nil
+    /// IP-like dotted form: digits.plus + (点 + digits.plus).plus.
+    /// Returns "127.0.0.1" for "幺二七点零点零点幺". Requires at least
+    /// two 点 separators (more than a single decimal point).
+    private static func parseDottedDigits(_ s: String) -> String? {
+        let segments = s.split(separator: "点", omittingEmptySubsequences: false)
+        guard segments.count >= 3,
+              segments.allSatisfy({ seg in
+                  !seg.isEmpty && seg.allSatisfy { digitChars.contains($0) }
+              }) else { return nil }
+        let arabicSegs: [String] = segments.map { seg in
+            String(seg.map { digitMap[$0]! })
         }
+        return arabicSegs.joined(separator: ".")
+    }
+
+    /// Big-number reader: split at 亿 and 万 boundaries, keep each
+    /// magnitude marker as text in the output.
+    /// WeText cardinal.py / measure.py convention:
+    ///   "三亿五千万"        → "3亿5000万"
+    ///   "一千万一千一百一十一" → "1000万1111"
+    ///   "一亿两千三百"       → "1亿2300"
+    ///   "一亿七万两千三百"    → "1亿72300" (亿-trailing has its own 万 segment merged)
+    /// "两千五百万" alone (no 亿, ends in 万) → "2500万".
+    /// "三亿" → "3亿"; standalone "一亿" same (WeText official-config behavior).
+    private static func parseKeepingTenThousandSuffix(_ s: String) -> String? {
+        // 亿-split path: any cardinal containing 亿
+        if let yiIdx = s.firstIndex(where: { $0 == "亿" || $0 == "億" }) {
+            let yiPrefix = String(s[..<yiIdx])
+            let afterYi = String(s[s.index(after: yiIdx)...])
+            guard let yiVal = positionalValue(yiPrefix), yiVal > 0 else { return nil }
+            // Trailing empty: bare X亿
+            if afterYi.isEmpty {
+                return "\(yiVal)亿"
+            }
+            // Trailing has 万? → recurse (gives "Y万Z" form)
+            // Strip a leading 零 if present (一亿零两千三百 form)
+            var rest = afterYi
+            if let firstChar = rest.first, firstChar == "零" || firstChar == "〇" {
+                rest = String(rest.dropFirst())
+            }
+            // Trailing positional: may include 万 segment
+            if rest.contains("万") || rest.contains("萬") {
+                guard let tail = parseKeepingTenThousandSuffix(rest)
+                        ?? parseMidWanSeparator(rest) else {
+                    // Fallback: try positional value of full rest
+                    guard let restVal = positionalValue(rest) else { return nil }
+                    return "\(yiVal)亿\(restVal)"
+                }
+                return "\(yiVal)亿\(tail)"
+            }
+            guard let restVal = positionalValue(rest) else { return nil }
+            return "\(yiVal)亿\(restVal)"
+        }
+        // 万-trailing path: 两千五百万 → 2500万
+        guard let last = s.last, last == "万" || last == "萬" else { return nil }
         let prefix = String(s.dropLast())
+        // Per WeText cardinal.py: ten_thousand prefix uses (teen|tens|digit)
+        // OR (under enable_million=true) (thousand|hundred|teen|tens|digit).
+        // Default config keeps 万 suffix only when prefix uses 百/千 — single
+        // digit "三万" would be ten_thousand path and emit full number.
         guard prefix.contains("百") || prefix.contains("千") else { return nil }
         guard let prefixVal = positionalValue(prefix) else { return nil }
         return "\(prefixVal)万"
+    }
+
+    /// 万-in-middle: "一千万一千一百一十一" → "1000万1111".
+    /// Upper part must be 百/千-magnitude reading.
+    private static func parseMidWanSeparator(_ s: String) -> String? {
+        guard let wanIdx = s.firstIndex(where: { $0 == "万" || $0 == "萬" }),
+              wanIdx != s.index(before: s.endIndex) else { return nil }
+        let upper = String(s[..<wanIdx])
+        var lower = String(s[s.index(after: wanIdx)...])
+        if let f = lower.first, f == "零" || f == "〇" { lower.removeFirst() }
+        guard !lower.isEmpty,
+              upper.contains("百") || upper.contains("千"),
+              let upperVal = positionalValue(upper),
+              let lowerVal = positionalValue(lower) else { return nil }
+        return "\(upperVal)万\(lowerVal)"
     }
 
     /// Positional state-machine reading. See README rule notes for
@@ -121,6 +198,12 @@ enum Cardinal {
                 lastUnit = 100_000_000; sawZero = false
             default:
                 if let arabic = digitMap[ch], let d = Int(String(arabic)) {
+                    // Two consecutive digits without intervening unit
+                    // is invalid: "三百九十九三" — the trailing 三 isn't
+                    // part of the same positional read. Returning nil
+                    // here lets the normalizeRun caller split the run
+                    // at a shorter prefix that does parse.
+                    if hasPending { return nil }
                     pending = d; hasPending = true
                 } else { return nil }
             }
@@ -132,32 +215,25 @@ enum Cardinal {
         return total + section
     }
 
-    // MARK: In-sentence scanner
+    // MARK: Module-level normalize (delegates to lattice)
 
-    /// Regex matching any run of cardinal characters (digits + units).
-    private static let _cardinalRunRE = try! NSRegularExpression(
-        pattern: "[\(cnCardinalClass)]+"
-    )
+    /// WeText sign.tsv — leading polarity marker. Used by the
+    /// tag() function in Taggers.swift.
+    static let signMap: [String: String] = [
+        "正负": "±",
+        "负的": "-",
+        "正": "+",
+        "负": "-",
+    ]
 
-    /// Scan a sentence and convert cardinal runs to Arabic.
-    ///
-    /// Rules per run:
-    /// - Single digit char: keep Chinese.
-    /// - Pure digit sequence ≥2 chars: digit-by-digit.
-    /// - Run contains unit chars (十/百/千/万/亿): positional parse.
-    /// - If parse fails, keep original.
-    static func normalize(_ text: String) -> String {
-        regexReplace(text, regex: _cardinalRunRE) { match, ns in
-            let run = ns.substring(with: match.range)
-            // Single DIGIT char (not unit char): keep Chinese.
-            // "一" → "一" but "十" → "10".
-            if run.count == 1, let ch = run.first, digitChars.contains(ch) {
-                return run
-            }
-            if let result = parse(run) {
-                return result
-            }
-            return run
-        }
+    /// Normalize using only this module's tagger + Char fallback.
+    /// Useful for testing the module in isolation; the full pipeline
+    /// is `ChineseITN.normalize`.
+    static func normalize(_ text: String,
+                          config: ChineseITNConfig = .default) -> String {
+        let chars = Array(text)
+        let candidates = Cardinal.tag(chars, config: config)
+        return Lattice.bestPath(chars: chars, candidates: candidates)
     }
 }
+

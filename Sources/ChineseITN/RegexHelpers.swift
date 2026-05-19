@@ -30,5 +30,5 @@ func regexReplace(_ text: String, regex: NSRegularExpression,
 
 /// Character classes for Chinese digit-char sequences (used by
 /// many regex patterns).
-let cnDigitClass = "零一二三四五六七八九〇洞两幺壹贰叁肆伍陆柒捌玖兩貳叁參陸"
-let cnCardinalClass = "零一二三四五六七八九十百千万亿〇洞两幺壹贰叁肆伍陆柒捌玖萬億兩貳"
+let cnDigitClass = "零一二三四五六七八九〇洞拐两幺壹贰叁肆伍陆柒捌玖兩貳叁參陸"
+let cnCardinalClass = "零一二三四五六七八九十百千万亿〇洞拐两幺壹贰叁肆伍陆柒捌玖萬億兩貳"

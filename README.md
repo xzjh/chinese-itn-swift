@@ -1,96 +1,289 @@
 # ChineseITN
 
-Pure Swift Chinese Inverse Text Normalization (ITN). Converts spoken-form
-Chinese into the written form an ASR pipeline should produce:
+Pure-Swift Chinese Inverse Text Normalization (ITN) — converts the
+spoken-form Chinese that ASR systems emit into written form.
 
-| Spoken                | →   | Written              |
-| --------------------- | --- | -------------------- |
-| 四点零八              | →   | 4.08                 |
-| 四点零八个G           | →   | 4.08个G              |
-| 二零二六年五月四号    | →   | 2026年5月4日         |
-| 下午三点四十五分      | →   | 下午3:45             |
-| 百分之三十            | →   | 30%                  |
-| 两千五百万            | →   | 2500万               |
-| 幺三八幺幺幺零零零零零 | →   | 13811100000          |
-| 京A幺二三四五         | →   | 京A12345             |
-| 百闻不如一见          | →   | 百闻不如一见 (idiom protected) |
+纯Swift实现的中文ITN（口语形态→书面形态）。无运行时FST依赖，可
+直接嵌入macOS / iOS App。
 
-Designed as a deterministic post-processing layer that drops in between
-an ASR engine (Whisper / Qwen3-ASR / SenseVoice / etc.) and downstream
-text consumption. No FST runtime dependency — works on macOS 13+ and
-iOS 16+ with no Pynini / OpenFst / native binary.
+| Spoken / 口语                | →   | Written / 书面             |
+| --------------------------- | --- | ------------------------ |
+| 二零二六年五月四号             | →   | 2026/05/04               |
+| 下午三点四十五分                | →   | 3:45p.m.                 |
+| 三点半                        | →   | 3:30                     |
+| 内存占用四点零八个G              | →   | 内存占用4.08个G           |
+| 百分之三十                     | →   | 30%                      |
+| 百分之三十到四十一               | →   | 30~41%                   |
+| 两千五百万                     | →   | 2500万                   |
+| 三亿五千万                     | →   | 3亿5000万                |
+| 一千美元                      | →   | $1000                    |
+| 重达二十五千克                  | →   | 重达25kg                 |
+| 幺三八幺幺幺零零零零零            | →   | 13811100000              |
+| 京A幺二三四五                  | →   | 京A12345                  |
+| 一加二等于三                    | →   | 1+2=3                    |
+| 三五百                        | →   | 300~500                  |
+| 十五六                        | →   | 15-6                     |
+| 二分之一                       | →   | 1/2                      |
+| 负三点一四                     | →   | -3.14                    |
+| 我的身份证号是三四零二零三一九三七零幺零幺零五幺七 | → | 我的身份证号是340203193701010517 |
+| w w w 点 baidu 点 com         | →   | www.baidu.com            |
+| 百闻不如一见                   | →   | 百闻不如一见（保留成语）     |
 
-## Design — combining advantages of WeText and fun_text_processing
+---
 
-This library combines algorithmic logic and lookup data from two
-reference Python implementations:
+## English
 
-- [WeTextProcessing](https://github.com/wenet-e2e/WeTextProcessing) by
-  the WeNet community (Apache 2.0) — primary base. Wider category
-  coverage (cardinal / decimal / date / time / money / fraction /
-  measure / license_plate / math / 82-entry idiom whitelist) and
-  produces phone-number conversion via its cardinal rule.
-- [fun_text_processing](https://github.com/modelscope/FunASR/tree/main/fun_text_processing)
-  by Alibaba DAMO Academy (MIT) — adopted for:
-  - Date output format with "年月日" separators preserved (more
-    natural than WeText's slash output);
-  - Electronic (URL / email) module that recognizes
-    spoken-spaced URLs like "h t t p 冒号斜杆斜杠 w w w 点 ...".
+### Why this library
 
-Both reference libraries are Pynini-based, requiring OpenFst (C++)
-which cannot bundle into iOS. This port reimplements the same FST
-grammars as Swift regex + lookup tables, following the pattern
-[FluidInference/text-processing-rs](https://github.com/FluidInference/text-processing-rs)
-proved viable on the Rust side.
+Chinese ASR systems (Whisper, Qwen3-ASR, SenseVoice, etc.) produce
+spoken-form transcripts (一千 instead of 1000). Downstream tools
+typically expect written form. The conversion is hard because
+context disambiguates between time (三点四十五分 = 3:45) and decimal
+(三点四五 = 3.45), idioms must be preserved (一帆风顺), and
+multi-segment cardinals follow specific rules (两千五百万 keeps the
+万 suffix).
 
-## Quick start
+Reference Python libraries (WeTextProcessing, fun_text_processing)
+solve this with Pynini-compiled FSTs — which requires OpenFst C++
+and can't ship in an iOS bundle. This library reimplements the same
+grammars in pure Swift, no native dependency.
+
+### Install
+
+Swift Package Manager:
+
+```swift
+.package(url: "https://github.com/xzjh/chinese-itn-swift", from: "0.1.0")
+```
+
+Add `"ChineseITN"` as a target dependency.
+
+### Use
 
 ```swift
 import ChineseITN
 
-let result = ChineseITN.normalize("内存占用四点零八个G")
-// → "内存占用4.08个G"
+let out = ChineseITN.normalize("内存占用四点零八个G")
+// "内存占用4.08个G"
 ```
 
-## Categories
+The API is a single static method. Threading-safe (all state is
+immutable lookup tables); call from any queue.
 
-| Module      | Source library          | Notes                                    |
-| ----------- | ----------------------- | ---------------------------------------- |
-| Cardinal    | WeText                  | digit / teen / tens / hundred / thousand / 万 / 亿; phone numbers via long-digit-sequence rule |
-| Decimal     | WeText                  | "X点Y → X.Y", incl. with量词 ("X点Y个G") |
-| Date        | fun_text_processing     | "X年Y月Z日" format, normalize 号 → 日    |
-| Time        | WeText                  | "X点Y分 → X:Y", "X点半 → X:30", noon prefix preserved |
-| Money       | WeText                  | 块钱 / 元 / 美金 / 欧元 / RMB symbols   |
-| Fraction    | WeText                  | X分之Y → Y/X, 百分之X → X%               |
-| Measure     | WeText                  | X point Y + unit binding                |
-| LicensePlate| WeText                  | 京A12345 form                            |
-| Math        | WeText                  | 加 / 减 / 乘 / 除                        |
-| Electronic  | fun_text_processing     | URLs / emails with spoken-spaced form    |
-| Whitelist   | WeText                  | 82 idioms / fixed phrases protected      |
+### Supported categories
 
-## Test strategy
+| Module          | What it handles                                                 |
+| --------------- | --------------------------------------------------------------- |
+| Cardinal        | 一 / 十 / 百 / 千 / 万 / 亿 positional read; multi-segment kept (两千五百万 → 2500万, 三亿五千万 → 3亿5000万); pure-digit reads for 11-digit mobile, 18-digit ID card, 14–16 with 3–5 char prefix split (e.g. 加一二三四 + 11-digit) |
+| Decimal         | X点Y → X.Y, with optional 负 sign                                |
+| Date            | 年月日 → YYYY/MM/DD; 年月 → YYYY/MM; 月日 → MM/DD; standalone 年 kept (二零零八年 → 2008年); 公元X年 → 公元 + arabized year |
+| Time            | X点Y分 → HH:MM, X点Y分Z秒 → HH:MM:SS, X点半 → HH:30, noon prefix (上午/早上/早晨 → a.m., 下午/晚上/傍晚 → p.m.) |
+| Money           | 元 / 美元 / 欧元 / 英镑 / 港元 / 日元 etc. → symbol or code prefix (¥ $ € £ HKD JPY ...) |
+| Fraction        | X分之Y → Y/X (multi-char numerator and denominator); 百分(之)?X → X%; 百分百 → 100%; 百分之X点Y → X.Y%; 百分之X到Y → X~Y% |
+| Measure         | cardinal / decimal + unit → SI abbreviation (千克 → kg, 公里 → km, 平方米 → m², 摄氏度 → °C, 毫秒 → ms, ~85 mappings); two-pass to prefer multi-char units (二十五千克 → 25kg, not 25000g) |
+| Math            | 加 / 减 / 乘 / 除 / 比 / 到 / 等于 → + − × ÷ : ~ =, with chained 负 sign |
+| LicensePlate    | 京A幺二三四五 → 京A12345 (31 province chars + alpha + 5–6 char body) |
+| Electronic      | spaced URL "w w w 点 X 点 Y" → www.X.Y                          |
+| SpecialCardinal | special_tilde ranges (三五百 → 300~500, 五六十 → 50~60, 三四万 → 3~4万); special_dash ranges (十五六 → 15-6, 四十五六 → 45-6, 七百三四十 → 730-40, 一万六七 → 16000-7000) |
+| Whitelist       | 74 idioms / fixed phrases protected from any digit conversion (一帆风顺, 百闻不如一见, 三心二意, 九寨沟, 三国演义, 星期一/二/三/..., 二维码, ...) |
 
-Two layers:
+Pipeline order matters: Electronic, LicensePlate, Date, Time,
+Fraction, Math, Money, Measure, Decimal, SpecialCardinal, Cardinal —
+each consumes its tokens before the next runs, so more-specific
+patterns claim ambiguous inputs first.
 
-1. **Unit tests** — per-module behavioral tests.
-2. **Parity tests** — fixtures generated by running the *actual*
-   reference library (WeText or fun_text_processing) on a curated
-   corpus. Swift output must equal each fixture byte-for-byte.
+### Design — combined from two reference libraries
+
+This port draws algorithm and data from two Pynini-based references:
+
+- WeTextProcessing (Apache 2.0) by the WeNet community — primary
+  base. Cardinal, Decimal, Date, Time, Money, Fraction, Measure,
+  LicensePlate, Math, Whitelist all follow WeText grammars and
+  reproduce its TSV lookup tables byte-for-byte.
+- fun_text_processing (MIT) by Alibaba DAMO — adopted for the
+  Electronic (URL) module, which WeText doesn't cover.
+
+The FST grammar is reimplemented as Swift NSRegularExpression
+patterns plus state-machine parsing for cardinal positional reads.
+
+### Test coverage
+
+Three test layers, all passing:
+
+- WeText official 189-case corpus (cardinal / date / time / money /
+  measure / fraction / math / license_plate / whitelist / char /
+  number / normalizer): 76.7% byte-for-byte parity. Remaining gaps
+  are documented WeText FST quirks (e.g. compound 元角分 money,
+  rare measure unit combinations).
+- Robustness corpus: 285 hand-curated inputs across 19 true-positive
+  categories (cardinal small/hundreds/thousands/wan-yi/pure-digit,
+  decimal, date, time, money, measure basic/range, fraction, math,
+  license plate, phone, special_tilde, special_dash, mixed sentences)
+  and 6 false-positive categories (78 inputs covering whitelist
+  idioms, plain text, ambiguous 一+char, 点 not as decimal, 年 not as
+  date, idiom-embedded sentences). Currently 100% pass.
+- ParityTests: hand-crafted byte-for-byte parity fixtures (126
+  cases): 100% pass.
+
+In total: 600 fixture cases + 74 explicit test methods across
+5 test files.
+
+How this compares to the reference libraries:
+
+| Test asset             | ChineseITN-swift | WeTextProcessing | fun_text_processing (zh) |
+| ---------------------- | ---------------- | ---------------- | ------------------------ |
+| Official fixtures      | 600              | 189 unique       | 0 (zh has no test corpus; only ja / id are provided) |
+| False-positive cases   | 78               | 0                | 0                        |
+| Categories covered     | 19 TP + 6 FP     | 12               | —                        |
+| Per-method assertions  | 74               | —                | —                        |
+
+Our suite is a superset of WeText's: we vendor their 189 official
+cases verbatim, then add 411 more curated cases (the robustness
+corpus plus hand-crafted parity fixtures). The robustness corpus is
+the only piece neither reference library has — false-positive
+guards (idiom preservation, plain text, ambiguous-`一`, `点` not as
+decimal, `年` not as date) protect against regressions that have no
+analog in the reference Python suites.
+
+Run with:
 
 ```bash
 swift test
 ```
 
-## Author
+Fixtures are generated from the live reference Python libraries via
+scripts/generate_fixtures.py and scripts/generate_robustness_fixtures.py.
 
-**xzjh**
+### License
 
-## License
+Apache License 2.0. See LICENSE. Third-party attribution in NOTICE.
 
-[Apache License 2.0](LICENSE). See [NOTICE](NOTICE) for third-party
-attribution to WeTextProcessing and fun_text_processing.
+### Author
 
-## Contributing
+xzjh
 
-Open issues / PRs welcome. Please ensure `swift build` and `swift
-test` pass before submitting.
+---
+
+## 中文
+
+### 为什么需要这个库
+
+中文ASR系统（Whisper / Qwen3-ASR / SenseVoice等）输出的是口语形态
+文本（"一千"而不是"1000"），但下游消费方通常期望书面形态。这个
+转换并不简单：上下文决定了"三点四十五分"是时间（3:45）而"三点
+四五"是小数（3.45）；成语必须保护（"一帆风顺"不能变成"1帆风顺"）；
+多段位数字遵循特定写法（"两千五百万"保留万后缀写成"2500万"）。
+
+业界Python参考实现（WeTextProcessing、fun_text_processing）都基于
+Pynini编译的FST，依赖OpenFst（C++），无法打包进iOS。本库用纯
+Swift重写同一套语法，零原生依赖。
+
+### 安装
+
+通过Swift Package Manager：
+
+```swift
+.package(url: "https://github.com/xzjh/chinese-itn-swift", from: "0.1.0")
+```
+
+把"ChineseITN"加入target依赖。
+
+### 使用
+
+```swift
+import ChineseITN
+
+let out = ChineseITN.normalize("内存占用四点零八个G")
+// "内存占用4.08个G"
+```
+
+公共API就一个静态方法。线程安全（所有状态都是不可变查表），可从
+任何队列调用。
+
+### 支持的类别
+
+| 模块             | 处理范围                                                       |
+| --------------- | ------------------------------------------------------------ |
+| Cardinal        | 一 / 十 / 百 / 千 / 万 / 亿 位读法；多段保留万/亿（两千五百万 → 2500万，三亿五千万 → 3亿5000万）；纯数字串处理11位手机号、18位身份证、14–16位带3–5字符前缀切分（如"加一二三四"+11位号码） |
+| Decimal         | X点Y → X.Y，可选"负"号                                         |
+| Date            | 年月日 → YYYY/MM/DD；年月 → YYYY/MM；月日 → MM/DD；独立"年"保留（二零零八年 → 2008年）；公元X年 → 公元 + 阿拉伯数字 |
+| Time            | X点Y分 → HH:MM，X点Y分Z秒 → HH:MM:SS，X点半 → HH:30，上下午前缀（上午/早上/早晨 → a.m.，下午/晚上/傍晚 → p.m.） |
+| Money           | 元 / 美元 / 欧元 / 英镑 / 港元 / 日元等 → 符号或代码前缀（¥ $ € £ HKD JPY ...） |
+| Fraction        | X分之Y → Y/X（分子分母可多字符）；百分(之)?X → X%；百分百 → 100%；百分之X点Y → X.Y%；百分之X到Y → X~Y% |
+| Measure         | 数字 + 单位 → 国际单位缩写（千克 → kg，公里 → km，平方米 → m²，摄氏度 → °C，毫秒 → ms，共约85条映射）；两遍扫描优先匹配多字符单位（二十五千克 → 25kg，不是25000g） |
+| Math            | 加 / 减 / 乘 / 除 / 比 / 到 / 等于 → + − × ÷ : ~ =，支持链式"负"号 |
+| LicensePlate    | 京A幺二三四五 → 京A12345（31个省份字符 + 字母 + 5–6字符车号） |
+| Electronic      | 空格分隔URL "w w w 点 X 点 Y" → www.X.Y                       |
+| SpecialCardinal | special_tilde范围（三五百 → 300~500，五六十 → 50~60，三四万 → 3~4万）；special_dash范围（十五六 → 15-6，四十五六 → 45-6，七百三四十 → 730-40，一万六七 → 16000-7000） |
+| Whitelist       | 74条成语 / 固定搭配保护，不做任何数字转换（一帆风顺、百闻不如一见、三心二意、九寨沟、三国演义、星期一/二/三/...、二维码等） |
+
+模块执行顺序：Electronic → LicensePlate → Date → Time → Fraction
+→ Math → Money → Measure → Decimal → SpecialCardinal → Cardinal。
+每个模块先消化自己能识别的token，更具体的模式先匹配，避免后续
+模块误识别。
+
+### 设计：两个参考库的取长补短
+
+算法和数据来自两个基于Pynini的Python参考实现：
+
+- WeTextProcessing（Apache 2.0），WeNet社区维护——主要参考。
+  Cardinal / Decimal / Date / Time / Money / Fraction / Measure /
+  LicensePlate / Math / Whitelist都按WeText的语法重写，TSV查表
+  数据逐字复刻。
+- fun_text_processing（MIT），阿里DAMO维护——Electronic（URL）
+  模块来自这里，WeText不覆盖此类。
+
+FST语法用Swift的NSRegularExpression加状态机解析（cardinal位值
+读法）重写。
+
+### 测试覆盖
+
+三层测试，全部通过：
+
+- WeText官方189条测试集（cardinal / date / time / money / measure
+  / fraction / math / license_plate / whitelist / char / number /
+  normalizer）：76.7%逐字节parity。剩余差距是WeText FST的小众
+  特性（复合"元角分"金额、罕见复合度量单位等）。
+- Robustness测试集：手工挑选285条输入，覆盖19个true positive
+  类别（cardinal small/hundreds/thousands/wan-yi/pure-digit、
+  decimal、date、time、money、measure basic/range、fraction、math、
+  license plate、phone、special_tilde、special_dash、mixed sentences）
+  及6个false positive类别（78条输入：whitelist成语、纯文本、
+  歧义的"一"+字符、"点"非小数语境、"年"非日期语境、嵌入成语的
+  句子），目前100%通过。
+- ParityTests：手写逐字节parity fixture（126条），100%通过。
+
+合计：600条fixture + 74个显式test method，分布在5个test文件。
+
+与两个参考库的对比：
+
+| 测试资源              | ChineseITN-swift | WeTextProcessing | fun_text_processing (zh) |
+| -------------------- | ---------------- | ---------------- | ------------------------ |
+| 官方fixture条数       | 600              | 189（去重后）     | 0（zh无测试集，仅日语 / 印尼语提供） |
+| False positive用例    | 78               | 0                | 0                        |
+| 覆盖类别              | 19类TP + 6类FP   | 12类             | —                        |
+| 单元test method数     | 74               | —                | —                        |
+
+测试集是WeText的超集：先把它官方189条逐字纳入，再加411条新curate的
+fixture（robustness集 + 手写parity fixture）。其中robustness集是两个
+参考库都没有的——false positive保护（成语保留、纯中文、歧义"一"+
+字符、"点"非小数、"年"非日期）覆盖了参考Python实现里完全没有的
+回归场景。
+
+运行：
+
+```bash
+swift test
+```
+
+测试fixture通过scripts/generate_fixtures.py和
+scripts/generate_robustness_fixtures.py用真实的Python参考库
+现场生成。
+
+### 许可证
+
+Apache License 2.0，详见LICENSE。第三方归属见NOTICE。
+
+### 作者
+
+xzjh

@@ -45,13 +45,29 @@ final class OfficialParityTests: XCTestCase {
         }
         var pass = 0
         var byCategory: [String: (pass: Int, fail: Int)] = [:]
+        var failures: [[String: String]] = []
         for fx in Self.fixtures {
-            let actual = ChineseITN.normalize(fx.input)
+            // Official WeText corpus was generated with the
+            // `enable_standalone_number=True, enable_0_to_9=True` config
+            // (see WeText itn/chinese/test/normalizer_test.py). Use the
+            // matching preset so single Chinese digits also convert.
+            let actual = ChineseITN.normalize(fx.input, config: .weTextOfficialTest)
             let isPass = actual == fx.expected
-            if isPass { pass += 1 }
+            if isPass { pass += 1 } else {
+                failures.append([
+                    "category": fx.category,
+                    "input": fx.input,
+                    "expected": fx.expected,
+                    "actual": actual,
+                ])
+            }
             var bc = byCategory[fx.category] ?? (0, 0)
             if isPass { bc.pass += 1 } else { bc.fail += 1 }
             byCategory[fx.category] = bc
+        }
+        if let data = try? JSONSerialization.data(withJSONObject: failures,
+                                                  options: [.prettyPrinted]) {
+            try? data.write(to: URL(fileURLWithPath: "/tmp/itn_parity_failures.json"))
         }
         let total = Self.fixtures.count
         let rate = Double(pass) / Double(total)

@@ -99,22 +99,23 @@ INPUTS_WETEXT = {
         "内存占用四点零八G但是变成四点三三G了",
         "今天来了五十人开会下午三点半结束",
     ],
-}
-
-INPUTS_FUN = {
     "date": [
         "二零二六年五月四号", "二零二六年", "五月四号",
         "三月二十一日", "公元一六八年", "零八年奥运会",
     ],
+}
+
+INPUTS_FUN = {
+    # Electronic URL normalization comes from fun_text_processing;
+    # WeText doesn't have a corresponding rule (returns input
+    # unchanged). Keep fun-generated expected output for parity.
     "electronic": [
         "h t t p 冒号斜杆斜杠 w w w 点 baidu 点 com",
     ],
 }
 
-# Source-of-truth overrides: cases where neither library's raw
-# output matches our intended Swift behavior. Reserved for genuine
-# semantic improvements over a library bug, not for stylistic
-# preferences. (Currently empty — we target strict WeText parity.)
+# Strict-parity: no overrides. Generated fixtures reflect exactly
+# what the reference Python library outputs.
 OVERRIDES: dict[tuple[str, str], tuple[str, str]] = {}
 
 
@@ -125,7 +126,10 @@ def main():
     sys.path.insert(0, "/tmp/FunASR")
     from itn.chinese.inverse_normalizer import InverseNormalizer as WeText
     from fun_text_processing.inverse_text_normalization.inverse_normalize import InverseNormalizer as FunText
-    we = WeText()
+    # overwrite_cache=True forces FST rebuild; otherwise the cached
+    # binary from a prior run (possibly under different flags) leaks
+    # in and silently changes expected outputs.
+    we = WeText(overwrite_cache=True)
     fun = FunText(lang="zh")
     print("Both libraries loaded", file=sys.stderr)
 

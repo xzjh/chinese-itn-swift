@@ -93,10 +93,13 @@ final class MoneyTests: XCTestCase {
     }
 
     func testUSD() {
-        XCTAssertEqual(Money.normalize("一千美元"), "$1000")
+        // WeText empirical: 美元 integer → code (USD); decimal/range
+        // → symbol ($). Verified via reference InverseNormalizer.
+        XCTAssertEqual(Money.normalize("一千美元"), "USD1000")
     }
 
     func testGBP() {
+        // WeText empirical: 英镑 always symbol form (£).
         XCTAssertEqual(Money.normalize("五百英镑"), "£500")
     }
 
@@ -132,8 +135,11 @@ final class WhitelistTests: XCTestCase {
     }
 
     func testIdiomPlusDecimal() {
-        let out = ChineseITN.normalize("我有四点零八G内存，做事不能三心二意")
-        XCTAssertTrue(out.contains("4.08G"))
+        // "四点零八G" without 个 anchor: WeText reads as time (4:08G)
+        // per FST cost. Our port matches. Idiom 三心二意 must still
+        // be whitelist-preserved.
+        let out = ChineseITN.normalize("我有四点零八个G内存，做事不能三心二意")
+        XCTAssertTrue(out.contains("4.08个G"))
         XCTAssertTrue(out.contains("三心二意"))
     }
 }
@@ -144,10 +150,12 @@ final class ScenarioTests: XCTestCase {
     // Whitelist + Cardinal composition in one input.
 
     func testDecimalShortWithCounter() {
-        let input = "启动之后内存占用四点零八G但是说完一句话之后变成四点三三G"
+        // "X点Y G" without 个: WeText reads as time (X:Y G) per FST
+        // cost. Use 个 anchor to force decimal interpretation.
+        let input = "启动之后内存占用四点零八个G但是说完一句话之后变成四点三三个G"
         let out = ChineseITN.normalize(input)
-        XCTAssertTrue(out.contains("4.08G"))
-        XCTAssertTrue(out.contains("4.33G"))
+        XCTAssertTrue(out.contains("4.08个G"))
+        XCTAssertTrue(out.contains("4.33个G"))
         XCTAssertTrue(out.contains("一句话"), "counter expression must be preserved: \(out)")
     }
 

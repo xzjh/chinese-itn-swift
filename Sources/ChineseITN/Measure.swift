@@ -1,26 +1,29 @@
 // Measure.swift
-// Cardinal / decimal + unit binding. Converts Chinese unit suffix
-// to its scientific abbreviation (米 → m, 千克 → kg, etc.) and
-// arabizes the number.
+// Cardinal / decimal + unit binding.
 // Ported from WeTextProcessing itn/chinese/rules/measure.py +
-// data/measure/units_en.tsv (Apache-2.0, 85 zh→en unit mappings).
+// data/measure/units_en.tsv + data/measure/units_zh.tsv (Apache-2.0).
+//
+// Recognition logic lives in Taggers.swift (`Measure.tag`).
 //
 // Examples:
-//   一千克       → 1kg
-//   重达二十五千克 → 重达25kg
+//   一千克            → 1kg
+//   重达二十五千克     → 重达25kg
 //   三百二十四点七五克 → 324.75g
 //   最高气温三十八摄氏度 → 最高气温38°C
 //   实际面积一百二十平方米 → 实际面积120m²
+//   每小时十千米       → 10km/h
+//   十一到一百千米每小时 → 11~100km/h
+//   三百九十九三盒     → 3993盒  (unit_sp_case1)
 
 import Foundation
 
 enum Measure {
 
     /// WeText data/measure/units_en.tsv — Chinese unit name to
-    /// scientific abbreviation. Sorted by descending length so a
-    /// longest-match-first regex works.
+    /// scientific abbreviation.
     static let unitMap: [String: String] = [
         "万亿焦耳": "tj",
+        "万伏特": "Wv",
         "千米每小时": "km/h",
         "千米一小时": "km/h",
         "公里每小时": "km/h",
@@ -105,44 +108,52 @@ enum Measure {
         "小时": "h",
     ]
 
-    /// Match decimal-or-cardinal expression + unit.
-    private static let _re: NSRegularExpression = {
-        // Longest unit first to avoid 米 matching before 千米.
-        let unitsSorted = unitMap.keys.sorted { $0.count > $1.count }
-        let unitAlt = unitsSorted.joined(separator: "|")
-        // Number: cardinal expression OR decimal "X点Y"
-        let numCardinal = "[\(cnCardinalClass)]+"
-        let numDecimal = "[\(cnCardinalClass)]+点[\(cnDigitClass)]+"
-        return try! NSRegularExpression(
-            pattern: "(\(numDecimal)|\(numCardinal))(\(unitAlt))"
-        )
-    }()
+    /// WeText data/measure/units_zh.tsv — Chinese 量词/单位 that keep
+    /// the Chinese form in output (number arabize, unit text stays).
+    /// Full 191-entry list from WeTextProcessing (Apache-2.0).
+    static let unitChineseKept: [String] = [
+        "年来", "年前", "年后", "年内", "年之前", "年之后",
+        "人", "篇", "帧", "把", "封", "艘", "套", "段", "匹",
+        "张", "座", "回", "场", "尾", "条", "个", "首", "阙",
+        "阵", "网", "炮", "顶", "丘", "棵", "只", "支", "袭",
+        "辆", "挑", "担", "颗", "壳", "窠", "曲", "墙", "群",
+        "腔", "砣", "客", "贯", "扎", "捆", "刀", "令", "手",
+        "罗", "坡", "山", "岭", "江", "溪", "钟", "队", "单",
+        "双", "对", "口", "头", "脚", "板", "跳", "枝", "件",
+        "贴", "针", "线", "管", "名", "位", "身", "堂", "课",
+        "本", "页", "家", "户", "层", "丝", "毫", "厘", "分",
+        "钱", "斤", "铢", "石", "钧", "锱", "忽", "克",
+        "寸", "尺", "丈", "里", "寻", "常", "铺", "程", "米",
+        "撮", "勺", "合", "升", "斗", "盘", "碗", "碟", "叠",
+        "桶", "笼", "盆", "盒", "杯", "斛", "锅", "簋", "篮",
+        "罐", "瓶", "壶", "卮", "盏", "箩", "箱", "煲", "啖",
+        "袋", "钵", "季", "年", "月", "日", "刻", "时", "周",
+        "天", "秒", "旬", "纪", "岁", "世", "更", "夜", "春",
+        "夏", "秋", "冬", "代", "伏", "辈", "丸", "泡", "粒",
+        "幢", "堆", "根", "道", "面", "片", "块", "架",
+        "角", "毛", "字", "元", "两", "两米饭", "两酒", "吨",
+        "顿", "牛", "次", "号", "亩",
+    ]
 
-    static func normalize(_ text: String) -> String {
-        regexReplace(text, regex: _re) { match, ns in
-            let numStr = ns.substring(with: match.range(at: 1))
-            let unitCN = ns.substring(with: match.range(at: 2))
-            guard let unitEN = unitMap[unitCN] else {
-                return ns.substring(with: match.range)
-            }
-            // Decimal form first
-            if let dotIdx = numStr.firstIndex(where: { $0 == "点" || $0 == "點" }) {
-                let intPart = String(numStr[..<dotIdx])
-                let fracPart = String(numStr[numStr.index(after: dotIdx)...])
-                guard let intVal = Cardinal.parseToInt(intPart) else {
-                    return ns.substring(with: match.range)
-                }
-                let fracDigits = fracPart.compactMap { digitMap[$0] }
-                guard fracDigits.count == fracPart.count else {
-                    return ns.substring(with: match.range)
-                }
-                return "\(intVal).\(String(fracDigits))\(unitEN)"
-            }
-            // Cardinal form
-            guard let n = Cardinal.parse(numStr) else {
-                return ns.substring(with: match.range)
-            }
-            return "\(n)\(unitEN)"
-        }
+    /// Look up a unit name and return its output form (arabized
+    /// abbreviation OR kept Chinese), or nil if not a unit.
+    static func resolveUnit(_ cn: String) -> String? {
+        if let en = unitMap[cn] { return en }
+        if unitChineseKept.contains(cn) { return cn }
+        return nil
+    }
+
+    static let allUnits: [String] = Array(unitMap.keys) + unitChineseKept
+
+    /// All units sorted longest-first (for left-to-right regex /
+    /// alternation matching).
+    static let unitsSortedLongestFirst: [String] = allUnits
+        .sorted { $0.count > $1.count }
+
+    static func normalize(_ text: String,
+                          config: ChineseITNConfig = .default) -> String {
+        let chars = Array(text)
+        let candidates = Measure.tag(chars, config: config)
+        return Lattice.bestPath(chars: chars, candidates: candidates)
     }
 }

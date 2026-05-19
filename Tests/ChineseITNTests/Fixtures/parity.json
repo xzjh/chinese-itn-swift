@@ -543,7 +543,7 @@
     "category": "money",
     "source": "WeText",
     "input": "五百美元",
-    "expected": "$500"
+    "expected": "USD500"
   },
   {
     "category": "money",
@@ -715,39 +715,39 @@
   },
   {
     "category": "date",
-    "source": "fun_text_processing",
+    "source": "WeText",
     "input": "二零二六年五月四号",
-    "expected": "2026年05月04日"
+    "expected": "2026/05/04"
   },
   {
     "category": "date",
-    "source": "fun_text_processing",
+    "source": "WeText",
     "input": "二零二六年",
     "expected": "2026年"
   },
   {
     "category": "date",
-    "source": "fun_text_processing",
+    "source": "WeText",
     "input": "五月四号",
-    "expected": "05月04日"
+    "expected": "05/04"
   },
   {
     "category": "date",
-    "source": "fun_text_processing",
+    "source": "WeText",
     "input": "三月二十一日",
-    "expected": "03月21日"
+    "expected": "03/21"
   },
   {
     "category": "date",
-    "source": "fun_text_processing",
+    "source": "WeText",
     "input": "公元一六八年",
-    "expected": "公元一六八年"
+    "expected": "公元168年"
   },
   {
     "category": "date",
-    "source": "fun_text_processing",
+    "source": "WeText",
     "input": "零八年奥运会",
-    "expected": "零八年奥运会"
+    "expected": "08年奥运会"
   },
   {
     "category": "electronic",

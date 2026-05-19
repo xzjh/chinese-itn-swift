@@ -1,0 +1,1712 @@
+[
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "零",
+    "expected": "零"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "一",
+    "expected": "一"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "二",
+    "expected": "二"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "三",
+    "expected": "三"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "四",
+    "expected": "四"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "五",
+    "expected": "五"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "六",
+    "expected": "六"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "七",
+    "expected": "七"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "八",
+    "expected": "八"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "九",
+    "expected": "九"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "十",
+    "expected": "10"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "十一",
+    "expected": "11"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "十二",
+    "expected": "12"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "十五",
+    "expected": "15"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "十九",
+    "expected": "19"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "二十",
+    "expected": "20"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "二十一",
+    "expected": "21"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "二十五",
+    "expected": "25"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "三十",
+    "expected": "30"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "四十二",
+    "expected": "42"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "五十五",
+    "expected": "55"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "六十",
+    "expected": "60"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "七十三",
+    "expected": "73"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "八十八",
+    "expected": "88"
+  },
+  {
+    "category": "tp_cardinal_small",
+    "source": "WeText",
+    "input": "九十九",
+    "expected": "99"
+  },
+  {
+    "category": "tp_cardinal_hundreds",
+    "source": "WeText",
+    "input": "一百",
+    "expected": "100"
+  },
+  {
+    "category": "tp_cardinal_hundreds",
+    "source": "WeText",
+    "input": "一百零一",
+    "expected": "101"
+  },
+  {
+    "category": "tp_cardinal_hundreds",
+    "source": "WeText",
+    "input": "一百一",
+    "expected": "110"
+  },
+  {
+    "category": "tp_cardinal_hundreds",
+    "source": "WeText",
+    "input": "一百一十一",
+    "expected": "111"
+  },
+  {
+    "category": "tp_cardinal_hundreds",
+    "source": "WeText",
+    "input": "二百",
+    "expected": "200"
+  },
+  {
+    "category": "tp_cardinal_hundreds",
+    "source": "WeText",
+    "input": "三百二十",
+    "expected": "320"
+  },
+  {
+    "category": "tp_cardinal_hundreds",
+    "source": "WeText",
+    "input": "五百零五",
+    "expected": "505"
+  },
+  {
+    "category": "tp_cardinal_hundreds",
+    "source": "WeText",
+    "input": "六百六十六",
+    "expected": "666"
+  },
+  {
+    "category": "tp_cardinal_hundreds",
+    "source": "WeText",
+    "input": "七百三",
+    "expected": "730"
+  },
+  {
+    "category": "tp_cardinal_hundreds",
+    "source": "WeText",
+    "input": "八百九十九",
+    "expected": "899"
+  },
+  {
+    "category": "tp_cardinal_hundreds",
+    "source": "WeText",
+    "input": "九百",
+    "expected": "900"
+  },
+  {
+    "category": "tp_cardinal_thousands",
+    "source": "WeText",
+    "input": "一千",
+    "expected": "1000"
+  },
+  {
+    "category": "tp_cardinal_thousands",
+    "source": "WeText",
+    "input": "一千零一",
+    "expected": "1001"
+  },
+  {
+    "category": "tp_cardinal_thousands",
+    "source": "WeText",
+    "input": "一千零一十",
+    "expected": "1010"
+  },
+  {
+    "category": "tp_cardinal_thousands",
+    "source": "WeText",
+    "input": "一千一",
+    "expected": "1100"
+  },
+  {
+    "category": "tp_cardinal_thousands",
+    "source": "WeText",
+    "input": "一千二百三十四",
+    "expected": "1234"
+  },
+  {
+    "category": "tp_cardinal_thousands",
+    "source": "WeText",
+    "input": "一千五百",
+    "expected": "1500"
+  },
+  {
+    "category": "tp_cardinal_thousands",
+    "source": "WeText",
+    "input": "两千",
+    "expected": "2000"
+  },
+  {
+    "category": "tp_cardinal_thousands",
+    "source": "WeText",
+    "input": "两千零五",
+    "expected": "2005"
+  },
+  {
+    "category": "tp_cardinal_thousands",
+    "source": "WeText",
+    "input": "两千零一十二",
+    "expected": "2012"
+  },
+  {
+    "category": "tp_cardinal_thousands",
+    "source": "WeText",
+    "input": "三千五百",
+    "expected": "3500"
+  },
+  {
+    "category": "tp_cardinal_thousands",
+    "source": "WeText",
+    "input": "九千九百九十九",
+    "expected": "9999"
+  },
+  {
+    "category": "tp_cardinal_wan_yi",
+    "source": "WeText",
+    "input": "一万",
+    "expected": "10000"
+  },
+  {
+    "category": "tp_cardinal_wan_yi",
+    "source": "WeText",
+    "input": "两万",
+    "expected": "20000"
+  },
+  {
+    "category": "tp_cardinal_wan_yi",
+    "source": "WeText",
+    "input": "一万一",
+    "expected": "11000"
+  },
+  {
+    "category": "tp_cardinal_wan_yi",
+    "source": "WeText",
+    "input": "一万零一",
+    "expected": "10001"
+  },
+  {
+    "category": "tp_cardinal_wan_yi",
+    "source": "WeText",
+    "input": "一万五千",
+    "expected": "15000"
+  },
+  {
+    "category": "tp_cardinal_wan_yi",
+    "source": "WeText",
+    "input": "十万",
+    "expected": "100000"
+  },
+  {
+    "category": "tp_cardinal_wan_yi",
+    "source": "WeText",
+    "input": "一百万",
+    "expected": "100万"
+  },
+  {
+    "category": "tp_cardinal_wan_yi",
+    "source": "WeText",
+    "input": "一千万",
+    "expected": "1000万"
+  },
+  {
+    "category": "tp_cardinal_wan_yi",
+    "source": "WeText",
+    "input": "一亿",
+    "expected": "一亿"
+  },
+  {
+    "category": "tp_cardinal_wan_yi",
+    "source": "WeText",
+    "input": "三亿五千万",
+    "expected": "3亿5000万"
+  },
+  {
+    "category": "tp_cardinal_wan_yi",
+    "source": "WeText",
+    "input": "十亿",
+    "expected": "10亿"
+  },
+  {
+    "category": "tp_cardinal_wan_yi",
+    "source": "WeText",
+    "input": "两千五百万",
+    "expected": "2500万"
+  },
+  {
+    "category": "tp_cardinal_wan_yi",
+    "source": "WeText",
+    "input": "一千万一千一百一十一",
+    "expected": "1000万1111"
+  },
+  {
+    "category": "tp_cardinal_pure_digit",
+    "source": "WeText",
+    "input": "幺幺零",
+    "expected": "110"
+  },
+  {
+    "category": "tp_cardinal_pure_digit",
+    "source": "WeText",
+    "input": "幺二三四",
+    "expected": "1234"
+  },
+  {
+    "category": "tp_cardinal_pure_digit",
+    "source": "WeText",
+    "input": "一二三四五",
+    "expected": "12345"
+  },
+  {
+    "category": "tp_cardinal_pure_digit",
+    "source": "WeText",
+    "input": "二零二六",
+    "expected": "2026"
+  },
+  {
+    "category": "tp_cardinal_pure_digit",
+    "source": "WeText",
+    "input": "二零零八",
+    "expected": "2008"
+  },
+  {
+    "category": "tp_cardinal_pure_digit",
+    "source": "WeText",
+    "input": "幺三五零幺二三四五六七",
+    "expected": "13501234567"
+  },
+  {
+    "category": "tp_cardinal_pure_digit",
+    "source": "WeText",
+    "input": "幺八五零幺七二零七幺九",
+    "expected": "18501720719"
+  },
+  {
+    "category": "tp_decimal",
+    "source": "WeText",
+    "input": "一点二",
+    "expected": "1.2"
+  },
+  {
+    "category": "tp_decimal",
+    "source": "WeText",
+    "input": "三点一四",
+    "expected": "3.14"
+  },
+  {
+    "category": "tp_decimal",
+    "source": "WeText",
+    "input": "三点一四一五九二六",
+    "expected": "3.1415926"
+  },
+  {
+    "category": "tp_decimal",
+    "source": "WeText",
+    "input": "零点五",
+    "expected": "0.5"
+  },
+  {
+    "category": "tp_decimal",
+    "source": "WeText",
+    "input": "零点零八",
+    "expected": "00:08"
+  },
+  {
+    "category": "tp_decimal",
+    "source": "WeText",
+    "input": "九点八",
+    "expected": "9.8"
+  },
+  {
+    "category": "tp_decimal",
+    "source": "WeText",
+    "input": "二十一点五",
+    "expected": "21.5"
+  },
+  {
+    "category": "tp_decimal",
+    "source": "WeText",
+    "input": "一百二十点五",
+    "expected": "120.5"
+  },
+  {
+    "category": "tp_decimal",
+    "source": "WeText",
+    "input": "三百零五点零八",
+    "expected": "305.08"
+  },
+  {
+    "category": "tp_decimal",
+    "source": "WeText",
+    "input": "负三点一四",
+    "expected": "-3.14"
+  },
+  {
+    "category": "tp_decimal",
+    "source": "WeText",
+    "input": "负零点五",
+    "expected": "-0.5"
+  },
+  {
+    "category": "tp_decimal",
+    "source": "WeText",
+    "input": "六十五点三三",
+    "expected": "65.33"
+  },
+  {
+    "category": "tp_date_full",
+    "source": "WeText",
+    "input": "二零零八年八月八日",
+    "expected": "2008/08/08"
+  },
+  {
+    "category": "tp_date_full",
+    "source": "WeText",
+    "input": "二零二六年五月四号",
+    "expected": "2026/05/04"
+  },
+  {
+    "category": "tp_date_full",
+    "source": "WeText",
+    "input": "二零零八年八月",
+    "expected": "2008/08"
+  },
+  {
+    "category": "tp_date_full",
+    "source": "WeText",
+    "input": "三月二十一日",
+    "expected": "03/21"
+  },
+  {
+    "category": "tp_date_full",
+    "source": "WeText",
+    "input": "八月八日",
+    "expected": "08/08"
+  },
+  {
+    "category": "tp_date_full",
+    "source": "WeText",
+    "input": "八月十六号",
+    "expected": "08/16"
+  },
+  {
+    "category": "tp_date_full",
+    "source": "WeText",
+    "input": "二零二六年",
+    "expected": "2026年"
+  },
+  {
+    "category": "tp_date_full",
+    "source": "WeText",
+    "input": "二千年",
+    "expected": "2000年"
+  },
+  {
+    "category": "tp_date_full",
+    "source": "WeText",
+    "input": "一九九六年",
+    "expected": "1996年"
+  },
+  {
+    "category": "tp_date_full",
+    "source": "WeText",
+    "input": "公元一九九六年",
+    "expected": "公元1996年"
+  },
+  {
+    "category": "tp_date_full",
+    "source": "WeText",
+    "input": "公元一六三年",
+    "expected": "公元163年"
+  },
+  {
+    "category": "tp_time_basic",
+    "source": "WeText",
+    "input": "三点半",
+    "expected": "3:30"
+  },
+  {
+    "category": "tp_time_basic",
+    "source": "WeText",
+    "input": "八点半",
+    "expected": "8:30"
+  },
+  {
+    "category": "tp_time_basic",
+    "source": "WeText",
+    "input": "下午三点",
+    "expected": "下午三点"
+  },
+  {
+    "category": "tp_time_basic",
+    "source": "WeText",
+    "input": "上午十点",
+    "expected": "上午10点"
+  },
+  {
+    "category": "tp_time_basic",
+    "source": "WeText",
+    "input": "上午八点半",
+    "expected": "8:30a.m."
+  },
+  {
+    "category": "tp_time_basic",
+    "source": "WeText",
+    "input": "凌晨五点",
+    "expected": "凌晨五点"
+  },
+  {
+    "category": "tp_time_basic",
+    "source": "WeText",
+    "input": "中午十二点",
+    "expected": "中午12点"
+  },
+  {
+    "category": "tp_time_basic",
+    "source": "WeText",
+    "input": "晚上九点",
+    "expected": "晚上九点"
+  },
+  {
+    "category": "tp_time_basic",
+    "source": "WeText",
+    "input": "傍晚六点半",
+    "expected": "6:30p.m."
+  },
+  {
+    "category": "tp_time_basic",
+    "source": "WeText",
+    "input": "凌晨三点半",
+    "expected": "凌晨3:30"
+  },
+  {
+    "category": "tp_time_minute_second",
+    "source": "WeText",
+    "input": "两点零二分",
+    "expected": "2:02"
+  },
+  {
+    "category": "tp_time_minute_second",
+    "source": "WeText",
+    "input": "十三点十分三十六秒",
+    "expected": "13:10:36"
+  },
+  {
+    "category": "tp_time_minute_second",
+    "source": "WeText",
+    "input": "上午一点零二分三十六秒",
+    "expected": "1:02:36a.m."
+  },
+  {
+    "category": "tp_time_minute_second",
+    "source": "WeText",
+    "input": "早上一点零二",
+    "expected": "1:02a.m."
+  },
+  {
+    "category": "tp_time_minute_second",
+    "source": "WeText",
+    "input": "早上一点零二分",
+    "expected": "1:02a.m."
+  },
+  {
+    "category": "tp_time_minute_second",
+    "source": "WeText",
+    "input": "晚上一点零二分",
+    "expected": "1:02p.m."
+  },
+  {
+    "category": "tp_time_minute_second",
+    "source": "WeText",
+    "input": "零点十分",
+    "expected": "00:10"
+  },
+  {
+    "category": "tp_time_minute_second",
+    "source": "WeText",
+    "input": "下午八点零五分",
+    "expected": "8:05p.m."
+  },
+  {
+    "category": "tp_time_minute_second",
+    "source": "WeText",
+    "input": "上午十点零五分",
+    "expected": "10:05a.m."
+  },
+  {
+    "category": "tp_time_minute_second",
+    "source": "WeText",
+    "input": "晚上十一点二十分",
+    "expected": "11:20p.m."
+  },
+  {
+    "category": "tp_money_basic",
+    "source": "WeText",
+    "input": "一元",
+    "expected": "一元"
+  },
+  {
+    "category": "tp_money_basic",
+    "source": "WeText",
+    "input": "十元",
+    "expected": "¥10"
+  },
+  {
+    "category": "tp_money_basic",
+    "source": "WeText",
+    "input": "五十元",
+    "expected": "¥50"
+  },
+  {
+    "category": "tp_money_basic",
+    "source": "WeText",
+    "input": "一百元",
+    "expected": "¥100"
+  },
+  {
+    "category": "tp_money_basic",
+    "source": "WeText",
+    "input": "一点二五元",
+    "expected": "¥1.25"
+  },
+  {
+    "category": "tp_money_basic",
+    "source": "WeText",
+    "input": "三十四点五二一元",
+    "expected": "¥34.521"
+  },
+  {
+    "category": "tp_money_basic",
+    "source": "WeText",
+    "input": "一千美元",
+    "expected": "USD1000"
+  },
+  {
+    "category": "tp_money_basic",
+    "source": "WeText",
+    "input": "两百欧元",
+    "expected": "€200"
+  },
+  {
+    "category": "tp_money_basic",
+    "source": "WeText",
+    "input": "五百美元",
+    "expected": "USD500"
+  },
+  {
+    "category": "tp_money_basic",
+    "source": "WeText",
+    "input": "三百英镑",
+    "expected": "£300"
+  },
+  {
+    "category": "tp_money_basic",
+    "source": "WeText",
+    "input": "一点二五人民币",
+    "expected": "CNY1.25"
+  },
+  {
+    "category": "tp_money_basic",
+    "source": "WeText",
+    "input": "一点二五美元",
+    "expected": "USD1.25"
+  },
+  {
+    "category": "tp_money_basic",
+    "source": "WeText",
+    "input": "价格是十三点五元",
+    "expected": "价格是¥13.5"
+  },
+  {
+    "category": "tp_money_basic",
+    "source": "WeText",
+    "input": "价格是十三点五美元",
+    "expected": "价格是USD13.5"
+  },
+  {
+    "category": "tp_money_basic",
+    "source": "WeText",
+    "input": "价格是十三点五澳元",
+    "expected": "价格是A$13.5"
+  },
+  {
+    "category": "tp_money_basic",
+    "source": "WeText",
+    "input": "价格是十三点五港元",
+    "expected": "价格是HKD13.5"
+  },
+  {
+    "category": "tp_measure_basic",
+    "source": "WeText",
+    "input": "二十年后",
+    "expected": "20年后"
+  },
+  {
+    "category": "tp_measure_basic",
+    "source": "WeText",
+    "input": "重达二十五千克",
+    "expected": "重达25kg"
+  },
+  {
+    "category": "tp_measure_basic",
+    "source": "WeText",
+    "input": "最高气温三十八摄氏度",
+    "expected": "最高气温38°C"
+  },
+  {
+    "category": "tp_measure_basic",
+    "source": "WeText",
+    "input": "实际面积一百二十平方米",
+    "expected": "实际面积120m²"
+  },
+  {
+    "category": "tp_measure_basic",
+    "source": "WeText",
+    "input": "渲染速度十毫秒一帧",
+    "expected": "渲染速度10ms一帧"
+  },
+  {
+    "category": "tp_measure_basic",
+    "source": "WeText",
+    "input": "百分之二",
+    "expected": "2%"
+  },
+  {
+    "category": "tp_measure_basic",
+    "source": "WeText",
+    "input": "百分之三十",
+    "expected": "30%"
+  },
+  {
+    "category": "tp_measure_basic",
+    "source": "WeText",
+    "input": "百分三十",
+    "expected": "30%"
+  },
+  {
+    "category": "tp_measure_basic",
+    "source": "WeText",
+    "input": "百分百",
+    "expected": "100%"
+  },
+  {
+    "category": "tp_measure_basic",
+    "source": "WeText",
+    "input": "百分之百",
+    "expected": "100%"
+  },
+  {
+    "category": "tp_measure_basic",
+    "source": "WeText",
+    "input": "百分之五十",
+    "expected": "50%"
+  },
+  {
+    "category": "tp_measure_basic",
+    "source": "WeText",
+    "input": "百分之九十九",
+    "expected": "99%"
+  },
+  {
+    "category": "tp_measure_range",
+    "source": "WeText",
+    "input": "七八公斤",
+    "expected": "7~8kg"
+  },
+  {
+    "category": "tp_measure_range",
+    "source": "WeText",
+    "input": "五六十摩尔",
+    "expected": "50~60mol"
+  },
+  {
+    "category": "tp_measure_range",
+    "source": "WeText",
+    "input": "三五百公里",
+    "expected": "300~500km"
+  },
+  {
+    "category": "tp_measure_range",
+    "source": "WeText",
+    "input": "三四万伏特",
+    "expected": "3~4Wv"
+  },
+  {
+    "category": "tp_measure_range",
+    "source": "WeText",
+    "input": "百分之三十到四十一",
+    "expected": "30~41%"
+  },
+  {
+    "category": "tp_fraction",
+    "source": "WeText",
+    "input": "二分之一",
+    "expected": "1/2"
+  },
+  {
+    "category": "tp_fraction",
+    "source": "WeText",
+    "input": "三分之二",
+    "expected": "2/3"
+  },
+  {
+    "category": "tp_fraction",
+    "source": "WeText",
+    "input": "十六分之三",
+    "expected": "3/16"
+  },
+  {
+    "category": "tp_fraction",
+    "source": "WeText",
+    "input": "百分之三十",
+    "expected": "30%"
+  },
+  {
+    "category": "tp_fraction",
+    "source": "WeText",
+    "input": "百分之二",
+    "expected": "2%"
+  },
+  {
+    "category": "tp_fraction",
+    "source": "WeText",
+    "input": "百分之五十",
+    "expected": "50%"
+  },
+  {
+    "category": "tp_fraction",
+    "source": "WeText",
+    "input": "百分之九十九",
+    "expected": "99%"
+  },
+  {
+    "category": "tp_math",
+    "source": "WeText",
+    "input": "一加二",
+    "expected": "1+2"
+  },
+  {
+    "category": "tp_math",
+    "source": "WeText",
+    "input": "负一加二",
+    "expected": "-1+2"
+  },
+  {
+    "category": "tp_math",
+    "source": "WeText",
+    "input": "一加二加三",
+    "expected": "1+2+3"
+  },
+  {
+    "category": "tp_math",
+    "source": "WeText",
+    "input": "二等于一加一",
+    "expected": "2=1+1"
+  },
+  {
+    "category": "tp_math",
+    "source": "WeText",
+    "input": "二十一到一千零一",
+    "expected": "21~1001"
+  },
+  {
+    "category": "tp_math",
+    "source": "WeText",
+    "input": "六百三到六百四",
+    "expected": "630~640"
+  },
+  {
+    "category": "tp_math",
+    "source": "WeText",
+    "input": "三乘以五等于十五",
+    "expected": "三乘以5=15"
+  },
+  {
+    "category": "tp_math",
+    "source": "WeText",
+    "input": "比分定格在七十八比九十六",
+    "expected": "比分定格在78:96"
+  },
+  {
+    "category": "tp_license_plate",
+    "source": "WeText",
+    "input": "京A幺二三四五",
+    "expected": "京A12345"
+  },
+  {
+    "category": "tp_license_plate",
+    "source": "WeText",
+    "input": "京A一二三四五",
+    "expected": "京A12345"
+  },
+  {
+    "category": "tp_license_plate",
+    "source": "WeText",
+    "input": "沪B九八七六五",
+    "expected": "沪B98765"
+  },
+  {
+    "category": "tp_license_plate",
+    "source": "WeText",
+    "input": "粤B五五五五五",
+    "expected": "粤B55555"
+  },
+  {
+    "category": "tp_license_plate",
+    "source": "WeText",
+    "input": "鄂A七L六二U",
+    "expected": "鄂A7L62U"
+  },
+  {
+    "category": "tp_license_plate",
+    "source": "WeText",
+    "input": "皖C九B三四E",
+    "expected": "皖C9B34E"
+  },
+  {
+    "category": "tp_phone",
+    "source": "WeText",
+    "input": "幺三八幺幺幺零零零零零",
+    "expected": "13811100000"
+  },
+  {
+    "category": "tp_phone",
+    "source": "WeText",
+    "input": "我的手机号是幺三八幺幺幺二二二三三",
+    "expected": "我的手机号是13811122233"
+  },
+  {
+    "category": "tp_phone",
+    "source": "WeText",
+    "input": "幺幺零",
+    "expected": "110"
+  },
+  {
+    "category": "tp_phone",
+    "source": "WeText",
+    "input": "加一二三四幺三八幺幺幺零零零零零",
+    "expected": "加1234 13811100000"
+  },
+  {
+    "category": "tp_phone",
+    "source": "WeText",
+    "input": "可以打我手机幺三五零幺二三四五六七",
+    "expected": "可以打我手机13501234567"
+  },
+  {
+    "category": "tp_phone",
+    "source": "WeText",
+    "input": "可以拨打幺二三零六来咨询",
+    "expected": "可以拨打12306来咨询"
+  },
+  {
+    "category": "tp_phone",
+    "source": "WeText",
+    "input": "拨打幺二三零六",
+    "expected": "拨打12306"
+  },
+  {
+    "category": "tp_special_tilde",
+    "source": "WeText",
+    "input": "三五百",
+    "expected": "300~500"
+  },
+  {
+    "category": "tp_special_tilde",
+    "source": "WeText",
+    "input": "三五千",
+    "expected": "3000~5000"
+  },
+  {
+    "category": "tp_special_tilde",
+    "source": "WeText",
+    "input": "三五万",
+    "expected": "3~5万"
+  },
+  {
+    "category": "tp_special_tilde",
+    "source": "WeText",
+    "input": "三四万",
+    "expected": "3~4万"
+  },
+  {
+    "category": "tp_special_tilde",
+    "source": "WeText",
+    "input": "五六十",
+    "expected": "50~60"
+  },
+  {
+    "category": "tp_special_tilde",
+    "source": "WeText",
+    "input": "六七十",
+    "expected": "60~70"
+  },
+  {
+    "category": "tp_special_tilde",
+    "source": "WeText",
+    "input": "七八十",
+    "expected": "70~80"
+  },
+  {
+    "category": "tp_special_tilde",
+    "source": "WeText",
+    "input": "八九十",
+    "expected": "80~90"
+  },
+  {
+    "category": "tp_special_tilde",
+    "source": "WeText",
+    "input": "一两百",
+    "expected": "100~200"
+  },
+  {
+    "category": "tp_special_tilde",
+    "source": "WeText",
+    "input": "两三百",
+    "expected": "200~300"
+  },
+  {
+    "category": "tp_special_tilde",
+    "source": "WeText",
+    "input": "三四百",
+    "expected": "300~400"
+  },
+  {
+    "category": "tp_special_tilde",
+    "source": "WeText",
+    "input": "四五百",
+    "expected": "400~500"
+  },
+  {
+    "category": "tp_special_tilde",
+    "source": "WeText",
+    "input": "一二",
+    "expected": "1~2"
+  },
+  {
+    "category": "tp_special_tilde",
+    "source": "WeText",
+    "input": "三四",
+    "expected": "3~4"
+  },
+  {
+    "category": "tp_special_tilde",
+    "source": "WeText",
+    "input": "七八",
+    "expected": "7~8"
+  },
+  {
+    "category": "tp_special_tilde",
+    "source": "WeText",
+    "input": "八九",
+    "expected": "8~9"
+  },
+  {
+    "category": "tp_special_dash",
+    "source": "WeText",
+    "input": "十五六",
+    "expected": "15-6"
+  },
+  {
+    "category": "tp_special_dash",
+    "source": "WeText",
+    "input": "十七八",
+    "expected": "17-8"
+  },
+  {
+    "category": "tp_special_dash",
+    "source": "WeText",
+    "input": "十八九",
+    "expected": "18-9"
+  },
+  {
+    "category": "tp_special_dash",
+    "source": "WeText",
+    "input": "四十五六",
+    "expected": "45-6"
+  },
+  {
+    "category": "tp_special_dash",
+    "source": "WeText",
+    "input": "六十七八",
+    "expected": "67-8"
+  },
+  {
+    "category": "tp_special_dash",
+    "source": "WeText",
+    "input": "七百三四十",
+    "expected": "730-40"
+  },
+  {
+    "category": "tp_special_dash",
+    "source": "WeText",
+    "input": "八百五六十",
+    "expected": "850-60"
+  },
+  {
+    "category": "tp_special_dash",
+    "source": "WeText",
+    "input": "一万六七",
+    "expected": "16000-7000"
+  },
+  {
+    "category": "tp_special_dash",
+    "source": "WeText",
+    "input": "三万四五",
+    "expected": "34000-5000"
+  },
+  {
+    "category": "tp_mixed_sentence",
+    "source": "WeText",
+    "input": "估值涨了百分之三十",
+    "expected": "估值涨了30%"
+  },
+  {
+    "category": "tp_mixed_sentence",
+    "source": "WeText",
+    "input": "团队从十五人扩到四十人",
+    "expected": "团队从15人扩到40人"
+  },
+  {
+    "category": "tp_mixed_sentence",
+    "source": "WeText",
+    "input": "我有五十块钱",
+    "expected": "我有50块钱"
+  },
+  {
+    "category": "tp_mixed_sentence",
+    "source": "WeText",
+    "input": "这一轮我们融了大概二千五百万美金",
+    "expected": "这一轮我们融了大概2500万美金"
+  },
+  {
+    "category": "tp_mixed_sentence",
+    "source": "WeText",
+    "input": "共四百六十五篇,约三百一十五万字",
+    "expected": "共465篇,约315万字"
+  },
+  {
+    "category": "tp_mixed_sentence",
+    "source": "WeText",
+    "input": "共计六点四二万人",
+    "expected": "共计6.42万人"
+  },
+  {
+    "category": "tp_mixed_sentence",
+    "source": "WeText",
+    "input": "同比升高零点六个百分点",
+    "expected": "同比升高0.6个百分点"
+  },
+  {
+    "category": "tp_mixed_sentence",
+    "source": "WeText",
+    "input": "总量的五分之一以上",
+    "expected": "总量的1/5以上"
+  },
+  {
+    "category": "tp_mixed_sentence",
+    "source": "WeText",
+    "input": "相当于头发丝的十六分之一",
+    "expected": "相当于头发丝的1/16"
+  },
+  {
+    "category": "tp_mixed_sentence",
+    "source": "WeText",
+    "input": "同比增长百分之六点三",
+    "expected": "同比增长6.3%"
+  },
+  {
+    "category": "tp_mixed_sentence",
+    "source": "WeText",
+    "input": "增幅百分之零点四",
+    "expected": "增幅0.4%"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "三七二十一",
+    "expected": "三七二十一"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "一共",
+    "expected": "一共"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "一个",
+    "expected": "一个"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "一下",
+    "expected": "一下"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "一些",
+    "expected": "一些"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "一起",
+    "expected": "一起"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "一会",
+    "expected": "一会"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "一路",
+    "expected": "一路"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "二维码",
+    "expected": "二维码"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "慢一点",
+    "expected": "慢一点"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "一般",
+    "expected": "一般"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "统一",
+    "expected": "统一"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "星期一",
+    "expected": "星期一"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "星期二",
+    "expected": "星期二"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "星期三",
+    "expected": "星期三"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "星期四",
+    "expected": "星期四"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "星期五",
+    "expected": "星期五"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "星期六",
+    "expected": "星期六"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "一年一度",
+    "expected": "一年一度"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "一点一滴",
+    "expected": "一点一滴"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "三心二意",
+    "expected": "三心二意"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "阳春三月",
+    "expected": "阳春三月"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "七嘴八舌",
+    "expected": "七嘴八舌"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "四分五裂",
+    "expected": "四分五裂"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "七荤八素",
+    "expected": "七荤八素"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "三纲五常",
+    "expected": "三纲五常"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "三姑六婆",
+    "expected": "三姑六婆"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "四大皆空",
+    "expected": "四大皆空"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "五体投地",
+    "expected": "五体投地"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "六神无主",
+    "expected": "六神无主"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "七窍生烟",
+    "expected": "七窍生烟"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "八面玲珑",
+    "expected": "八面玲珑"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "九牛一毛",
+    "expected": "九牛一毛"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "百闻不如一见",
+    "expected": "百闻不如一见"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "百思不得其解",
+    "expected": "百思不得其解"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "千变万化",
+    "expected": "千变万化"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "千方百计",
+    "expected": "千方百计"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "千头万绪",
+    "expected": "千头万绪"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "千言万语",
+    "expected": "千言万语"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "万紫千红",
+    "expected": "万紫千红"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "万事如意",
+    "expected": "万事如意"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "万无一失",
+    "expected": "万无一失"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "一帆风顺",
+    "expected": "一帆风顺"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "一举两得",
+    "expected": "一举两得"
+  },
+  {
+    "category": "fp_whitelist_idioms",
+    "source": "WeText",
+    "input": "三言两语",
+    "expected": "三言两语"
+  },
+  {
+    "category": "fp_plain_text",
+    "source": "WeText",
+    "input": "你好世界",
+    "expected": "你好世界"
+  },
+  {
+    "category": "fp_plain_text",
+    "source": "WeText",
+    "input": "今天天气真好",
+    "expected": "今天天气真好"
+  },
+  {
+    "category": "fp_plain_text",
+    "source": "WeText",
+    "input": "我爱中国",
+    "expected": "我爱中国"
+  },
+  {
+    "category": "fp_plain_text",
+    "source": "WeText",
+    "input": "这是一个测试",
+    "expected": "这是一个测试"
+  },
+  {
+    "category": "fp_plain_text",
+    "source": "WeText",
+    "input": "请帮我看一下",
+    "expected": "请帮我看一下"
+  },
+  {
+    "category": "fp_plain_text",
+    "source": "WeText",
+    "input": "明天再见",
+    "expected": "明天再见"
+  },
+  {
+    "category": "fp_plain_text",
+    "source": "WeText",
+    "input": "希望一切顺利",
+    "expected": "希望一切顺利"
+  },
+  {
+    "category": "fp_plain_text",
+    "source": "WeText",
+    "input": "随便说说而已",
+    "expected": "随便说说而已"
+  },
+  {
+    "category": "fp_plain_text",
+    "source": "WeText",
+    "input": "有事请联系我",
+    "expected": "有事请联系我"
+  },
+  {
+    "category": "fp_plain_text",
+    "source": "WeText",
+    "input": "下次注意一下吧",
+    "expected": "下次注意一下吧"
+  },
+  {
+    "category": "fp_ambiguous_one_unit",
+    "source": "WeText",
+    "input": "我说一句话",
+    "expected": "我说一句话"
+  },
+  {
+    "category": "fp_ambiguous_one_unit",
+    "source": "WeText",
+    "input": "他一个人",
+    "expected": "他一个人"
+  },
+  {
+    "category": "fp_ambiguous_one_unit",
+    "source": "WeText",
+    "input": "再来一杯",
+    "expected": "再来一杯"
+  },
+  {
+    "category": "fp_ambiguous_one_unit",
+    "source": "WeText",
+    "input": "看一眼",
+    "expected": "看一眼"
+  },
+  {
+    "category": "fp_ambiguous_one_unit",
+    "source": "WeText",
+    "input": "想一想",
+    "expected": "想一想"
+  },
+  {
+    "category": "fp_ambiguous_one_unit",
+    "source": "WeText",
+    "input": "走一步看一步",
+    "expected": "走一步看一步"
+  },
+  {
+    "category": "fp_ambiguous_one_unit",
+    "source": "WeText",
+    "input": "试一试",
+    "expected": "试一试"
+  },
+  {
+    "category": "fp_sentence_with_idiom",
+    "source": "WeText",
+    "input": "百闻不如一见一千零一夜也精彩",
+    "expected": "百闻不如一见1001夜也精彩"
+  },
+  {
+    "category": "fp_sentence_with_idiom",
+    "source": "WeText",
+    "input": "做事不能三心二意",
+    "expected": "做事不能三心二意"
+  },
+  {
+    "category": "fp_sentence_with_idiom",
+    "source": "WeText",
+    "input": "他三言两语就说完了一件事",
+    "expected": "他三言两语就说完了一件事"
+  },
+  {
+    "category": "fp_sentence_with_idiom",
+    "source": "WeText",
+    "input": "做事要一举两得才好",
+    "expected": "做事要一举两得才好"
+  },
+  {
+    "category": "fp_sentence_with_idiom",
+    "source": "WeText",
+    "input": "听他千言万语不如自己看一眼",
+    "expected": "听他千言万语不如自己看一眼"
+  },
+  {
+    "category": "fp_dot_not_decimal",
+    "source": "WeText",
+    "input": "一点点",
+    "expected": "一点点"
+  },
+  {
+    "category": "fp_dot_not_decimal",
+    "source": "WeText",
+    "input": "有点冷",
+    "expected": "有点冷"
+  },
+  {
+    "category": "fp_dot_not_decimal",
+    "source": "WeText",
+    "input": "差一点儿",
+    "expected": "差一点儿"
+  },
+  {
+    "category": "fp_dot_not_decimal",
+    "source": "WeText",
+    "input": "我的观点",
+    "expected": "我的观点"
+  },
+  {
+    "category": "fp_dot_not_decimal",
+    "source": "WeText",
+    "input": "重点是这个",
+    "expected": "重点是这个"
+  },
+  {
+    "category": "fp_year_word_not_date",
+    "source": "WeText",
+    "input": "年初",
+    "expected": "年初"
+  },
+  {
+    "category": "fp_year_word_not_date",
+    "source": "WeText",
+    "input": "年底",
+    "expected": "年底"
+  },
+  {
+    "category": "fp_year_word_not_date",
+    "source": "WeText",
+    "input": "去年",
+    "expected": "去年"
+  },
+  {
+    "category": "fp_year_word_not_date",
+    "source": "WeText",
+    "input": "明年",
+    "expected": "明年"
+  },
+  {
+    "category": "fp_year_word_not_date",
+    "source": "WeText",
+    "input": "童年时代",
+    "expected": "童年时代"
+  },
+  {
+    "category": "fp_year_word_not_date",
+    "source": "WeText",
+    "input": "新年快乐",
+    "expected": "新年快乐"
+  }
+]

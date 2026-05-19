@@ -14,10 +14,11 @@ https://github.com/wenet-e2e/WeTextProcessing
 License: Apache License 2.0
 
 Cardinal / Decimal / Date / Time / Money / Fraction / Measure /
-LicensePlate / Math / Whitelist modules' algorithm and lookup data
-are ported from WeTextProcessing's itn/chinese/ Pynini grammars and
-TSV data files. The FST grammar is reimplemented as Swift regex +
-lookup tables; the data is reproduced verbatim.
+LicensePlate / Math / SpecialCardinal / Whitelist modules' algorithm
+and lookup data are ported from WeTextProcessing's itn/chinese/
+Pynini grammars and TSV data files. The FST grammar is reimplemented
+as Swift regex + state-machine parsing; the data is reproduced
+verbatim. Date output uses WeText's slash form (2026/05/04).
 
 ---
 
@@ -28,9 +29,8 @@ License: MIT License
 
 Electronic (URL / email) module's algorithm is ported from
 fun_text_processing's inverse_text_normalization/zh/taggers/electronic.py.
-Date output format ("X年Y月Z日" with 年月日 separators) follows
-fun_text_processing's verbalizer style rather than WeTextProcessing's
-slash-separated output.
+WeTextProcessing does not cover this category; fun_text_processing
+fills the gap.
 
 ---
 
