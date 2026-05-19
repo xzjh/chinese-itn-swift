@@ -70,6 +70,40 @@ let out = ChineseITN.normalize("内存占用四点零八个G")
 The API is a single static method. Threading-safe (all state is
 immutable lookup tables); call from any queue.
 
+### Configuration
+
+`ChineseITN.normalize(_:config:)` takes an optional `ChineseITNConfig`.
+All four flags mirror WeTextProcessing's `InverseNormalizer()`
+parameters with identical names and semantics.
+
+| Flag | Default | Effect when set to the non-default |
+|------|---------|------------------------------------|
+| `enableStandaloneNumber` | `true` | `false` → bare cardinal expressions stay in Chinese (`两万` → `两万`). Unit-bound numbers still convert (`一千克` → `1000g`). Drops the Cardinal tagger from the lattice. |
+| `enable0To9` | `false` | `true` → single Chinese digit chars convert standalone (`一` → `1`, `零` → `0`). Default keeps them Chinese to avoid spurious conversion of `一个 / 一会` etc. |
+| `enableMillion` | `false` | `true` → 千/百 + 万 fully arabize (`两千五百万` → `25000000`) instead of keeping `万` as a readability marker (`两千五百万` → `2500万`). `亿` is still kept as a text marker regardless. |
+| `removeInterjections` | `true` | `false` → `呃` / `啊` fillers stay in the output. Default removes them per WeText `data/default/blacklist.tsv`. |
+
+Two presets:
+- `ChineseITNConfig.default` — matches WeText `InverseNormalizer()` constructor defaults (recommended for real ASR post-processing).
+- `ChineseITNConfig.weTextOfficialTest` — matches the config WeText uses to run its own `test/data/*.txt` corpus (`enableStandaloneNumber=true, enable0To9=true`). Use this if you want to reproduce WeText official-corpus numbers byte-for-byte.
+
+```swift
+var cfg = ChineseITNConfig.default
+cfg.enableMillion = true
+ChineseITN.normalize("两千五百万美元", config: cfg)
+// "$25000000"
+```
+
+CLI equivalents (in the `chinese-itn` executable):
+
+```
+chinese-itn --enable-0-to-9               # enable0To9 = true
+chinese-itn --enable-million              # enableMillion = true
+chinese-itn --disable-standalone-number   # enableStandaloneNumber = false
+chinese-itn --no-interjections            # removeInterjections = false
+chinese-itn --official-test               # use the weTextOfficialTest preset
+```
+
 ### Supported categories
 
 | Module          | What it handles                                                 |
@@ -202,6 +236,39 @@ let out = ChineseITN.normalize("内存占用四点零八个G")
 
 公共API就一个静态方法。线程安全（所有状态都是不可变查表），可从
 任何队列调用。
+
+### 配置
+
+`ChineseITN.normalize(_:config:)` 接受可选的 `ChineseITNConfig`。
+所有4个flag跟WeTextProcessing的`InverseNormalizer()`参数同名同语义。
+
+| Flag | 默认 | 非默认时的效果 |
+|------|------|----------------|
+| `enableStandaloneNumber` | `true` | `false` → 纯cardinal表达式保留中文（`两万` → `两万`）。带单位的数字依然转换（`一千克` → `1000g`）。Cardinal tagger 从lattice中移除。 |
+| `enable0To9` | `false` | `true` → 单字数字standalone转阿拉伯（`一` → `1`，`零` → `0`）。默认保留中文，避免`一个 / 一会`等误转。 |
+| `enableMillion` | `false` | `true` → 千/百 + 万 完全展开（`两千五百万` → `25000000`），不保留`万`作为readability标记。`亿`始终保留为文本标记。 |
+| `removeInterjections` | `true` | `false` → 保留`呃` / `啊`等filler。默认删除（按WeText `data/default/blacklist.tsv`）。 |
+
+两个preset：
+- `ChineseITNConfig.default` —— 跟WeText `InverseNormalizer()`构造函数默认值一致（推荐用于真实ASR后处理）。
+- `ChineseITNConfig.weTextOfficialTest` —— 跟WeText跑自己`test/data/*.txt`官方corpus用的config一致（`enableStandaloneNumber=true, enable0To9=true`）。复现WeText官方测试集逐字节parity时用这个。
+
+```swift
+var cfg = ChineseITNConfig.default
+cfg.enableMillion = true
+ChineseITN.normalize("两千五百万美元", config: cfg)
+// "$25000000"
+```
+
+CLI对应flag（`chinese-itn`可执行文件）：
+
+```
+chinese-itn --enable-0-to-9               # enable0To9 = true
+chinese-itn --enable-million              # enableMillion = true
+chinese-itn --disable-standalone-number   # enableStandaloneNumber = false
+chinese-itn --no-interjections            # removeInterjections = false
+chinese-itn --official-test               # 用weTextOfficialTest preset
+```
 
 ### 支持的类别
 
