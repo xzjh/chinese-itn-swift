@@ -339,25 +339,27 @@ extension Money {
             }
 
             // tilde range: tilde key + currency
-            for key in tildeKeysSorted {
-                if i + key.count <= n {
-                    let candidate = String(chars[i..<(i + key.count)])
-                    if candidate == key,
-                       let val = SpecialCardinal.tildePairs[key] {
-                        for cur in currenciesSorted {
-                            let curStart = i + key.count
-                            if curStart + cur.count <= n {
-                                let curCand = String(chars[curStart..<(curStart + cur.count)])
-                                if curCand == cur {
-                                    let prefix = currencyPrefixFor(
-                                        cur, hasDecimal: false, hasRange: true)
-                                    out.append(Candidate(
-                                        startIdx: i,
-                                        endIdx: curStart + cur.count,
-                                        output: "\(prefix)\(val)",
-                                        weight: TaggerWeight.money,
-                                        source: "money_tilde"
-                                    ))
+            if config.enableSpecialTilde {
+                for key in tildeKeysSorted {
+                    if i + key.count <= n {
+                        let candidate = String(chars[i..<(i + key.count)])
+                        if candidate == key,
+                           let val = SpecialCardinal.tildePairs[key] {
+                            for cur in currenciesSorted {
+                                let curStart = i + key.count
+                                if curStart + cur.count <= n {
+                                    let curCand = String(chars[curStart..<(curStart + cur.count)])
+                                    if curCand == cur {
+                                        let prefix = currencyPrefixFor(
+                                            cur, hasDecimal: false, hasRange: true)
+                                        out.append(Candidate(
+                                            startIdx: i,
+                                            endIdx: curStart + cur.count,
+                                            output: "\(prefix)\(val)",
+                                            weight: TaggerWeight.money,
+                                            source: "money_tilde"
+                                        ))
+                                    }
                                 }
                             }
                         }
@@ -751,18 +753,28 @@ extension SpecialCardinal {
             if i > 0 && cnCardSet.contains(chars[i - 1]) { continue }
 
             // 1. tilde: (key)(万/亿)?
+            // When enabled, emit the tilde-range output ("三五百"→"300~500").
+            // When disabled, emit the IDENTITY (input=output) over the
+            // same span so the lattice prefers the whole phrase verbatim
+            // over a half-conversion via Cardinal on a sub-span (e.g.
+            // "三五百" → "三500" because Cardinal can claim "五百"=500).
+            // Same source label either way so weight stays consistent.
             for key in tildeKeys {
                 let kEnd = i + key.count
                 guard kEnd <= n,
                       String(chars[i..<kEnd]) == key,
                       let val = tildePairs[key] else { continue }
+                let keepStr = String(chars[i..<kEnd])
                 // No following cn-card unless 万/亿 suffix
                 if kEnd < n {
                     let next = chars[kEnd]
                     if next == "万" || next == "亿" || next == "萬" || next == "億" {
+                        let output = config.enableSpecialTilde
+                            ? "\(val)\(next)"
+                            : "\(keepStr)\(next)"
                         out.append(Candidate(
                             startIdx: i, endIdx: kEnd + 1,
-                            output: "\(val)\(next)",
+                            output: output,
                             weight: TaggerWeight.specialCardinal,
                             source: "special_tilde"
                         ))
@@ -772,7 +784,7 @@ extension SpecialCardinal {
                 }
                 out.append(Candidate(
                     startIdx: i, endIdx: kEnd,
-                    output: val,
+                    output: config.enableSpecialTilde ? val : keepStr,
                     weight: TaggerWeight.specialCardinal,
                     source: "special_tilde"
                 ))
@@ -927,7 +939,8 @@ extension Measure {
                                     emitWithUnit(
                                         chars: chars, n: n,
                                         startIdx: i, valueEnd: k, valueStr: valStr,
-                                        units: units, out: &out, source: "measure_decimal"
+                                        units: units, out: &out, source: "measure_decimal",
+                                        enableTimeEnglish: config.enableTimeEnglishMapping
                                     )
                                 }
                             }
@@ -948,7 +961,8 @@ extension Measure {
                                         emitWithUnit(
                                             chars: chars, n: n,
                                             startIdx: i, valueEnd: kEnd, valueStr: valStr,
-                                            units: units, out: &out, source: "measure_range"
+                                            units: units, out: &out, source: "measure_range",
+                                            enableTimeEnglish: config.enableTimeEnglishMapping
                                         )
                                     }
                                 }
@@ -965,7 +979,9 @@ extension Measure {
                     let dEnd = dStart + denomUnit.count
                     guard dEnd <= n,
                           String(chars[dStart..<dEnd]) == denomUnit else { continue }
-                    guard let denomEN = resolveUnit(denomUnit) else { continue }
+                    guard let denomEN = resolveUnit(denomUnit,
+                            enableTimeEnglish: config.enableTimeEnglishMapping)
+                          else { continue }
 
                     // Find max cn-card run
                     var j = dEnd
@@ -1002,7 +1018,9 @@ extension Measure {
                                 guard nuEnd <= n,
                                       String(chars[rangeEnd..<nuEnd]) == numerUnit
                                 else { continue }
-                                guard let numerEN = resolveUnit(numerUnit) else { continue }
+                                guard let numerEN = resolveUnit(numerUnit,
+                                        enableTimeEnglish: config.enableTimeEnglishMapping)
+                                      else { continue }
                                 out.append(Candidate(
                                     startIdx: i, endIdx: nuEnd,
                                     output: "\(valueStr)\(numerEN)/\(denomEN)",
@@ -1019,7 +1037,7 @@ extension Measure {
             // Try "unit subsumes 万/亿" path FIRST (e.g. 万伏特 → Wv),
             // then "万/亿 kept as plain suffix" path (e.g. 万吨 → 万吨).
             // Earlier-emitted candidate wins on tie cost.
-            if lookbehindOK {
+            if lookbehindOK && config.enableSpecialTilde {
                 for tildeKey in SpecialCardinal.tildePairs.keys.sorted(by: { $0.count > $1.count }) {
                     let tEnd = i + tildeKey.count
                     guard tEnd <= n,
@@ -1030,7 +1048,7 @@ extension Measure {
                         let uEnd = tEnd + unit.count
                         guard uEnd <= n,
                               String(chars[tEnd..<uEnd]) == unit,
-                              let unitOut = resolveUnit(unit) else { continue }
+                              let unitOut = resolveUnit(unit, enableTimeEnglish: config.enableTimeEnglishMapping) else { continue }
                         out.append(Candidate(
                             startIdx: i, endIdx: uEnd,
                             output: "\(tildeVal)\(unitOut)",
@@ -1046,7 +1064,7 @@ extension Measure {
                                 let uEnd = tEnd + 1 + unit.count
                                 guard uEnd <= n,
                                       String(chars[(tEnd + 1)..<uEnd]) == unit,
-                                      let unitOut = resolveUnit(unit) else { continue }
+                                      let unitOut = resolveUnit(unit, enableTimeEnglish: config.enableTimeEnglishMapping) else { continue }
                                 out.append(Candidate(
                                     startIdx: i, endIdx: uEnd,
                                     output: "\(tildeVal)\(c)\(unitOut)",
@@ -1061,7 +1079,7 @@ extension Measure {
                         let uEnd = tEnd + unit.count
                         guard uEnd <= n,
                               String(chars[tEnd..<uEnd]) == unit,
-                              let unitOut = resolveUnit(unit) else { continue }
+                              let unitOut = resolveUnit(unit, enableTimeEnglish: config.enableTimeEnglishMapping) else { continue }
                         out.append(Candidate(
                             startIdx: i, endIdx: uEnd,
                             output: "\(tildeVal)\(unitOut)",
@@ -1088,7 +1106,7 @@ extension Measure {
                         let uEnd = formEnd + unit.count
                         guard uEnd <= n,
                               String(chars[formEnd..<uEnd]) == unit,
-                              let unitOut = resolveUnit(unit) else { continue }
+                              let unitOut = resolveUnit(unit, enableTimeEnglish: config.enableTimeEnglishMapping) else { continue }
                         out.append(Candidate(
                             startIdx: i, endIdx: uEnd,
                             output: "\(leadStr)\(dashVal)\(unitOut)",
@@ -1169,20 +1187,22 @@ extension Measure {
         emitWithUnit(
             chars: chars, n: n,
             startIdx: startIdx, valueEnd: numEnd, valueStr: v,
-            units: units, out: &out, source: "measure_cardinal"
+            units: units, out: &out, source: "measure_cardinal",
+            enableTimeEnglish: config.enableTimeEnglishMapping
         )
     }
 
     private static func emitWithUnit(
         chars: [Character], n: Int,
         startIdx: Int, valueEnd: Int, valueStr: String,
-        units: [String], out: inout [Candidate], source: String
+        units: [String], out: inout [Candidate], source: String,
+        enableTimeEnglish: Bool
     ) {
         for unit in units {
             let uEnd = valueEnd + unit.count
             guard uEnd <= n,
                   String(chars[valueEnd..<uEnd]) == unit else { continue }
-            guard let unitOut = resolveUnit(unit) else { continue }
+            guard let unitOut = resolveUnit(unit, enableTimeEnglish: enableTimeEnglish) else { continue }
             out.append(Candidate(
                 startIdx: startIdx, endIdx: uEnd,
                 output: "\(valueStr)\(unitOut)",
@@ -1210,16 +1230,21 @@ extension TimeNormalize {
 
         // Iterate each starting position
         for i in 0..<n {
-            // Optional noon prefix
+            // Optional noon prefix (gated: when enableTimeEnglishMapping
+            // is False, leave the prefix to char fallback so the time
+            // converts but the noon word stays Chinese — "早上十点半" →
+            // "早上10:30" instead of "10:30a.m.").
             var noonLen = 0
             var noonOut = ""
-            for noonKey in noonMapKeys {
-                if i + noonKey.count <= n {
-                    let candidate = String(chars[i..<(i + noonKey.count)])
-                    if candidate == noonKey {
-                        noonLen = noonKey.count
-                        noonOut = noonMapLocal[noonKey] ?? ""
-                        break
+            if config.enableTimeEnglishMapping {
+                for noonKey in noonMapKeys {
+                    if i + noonKey.count <= n {
+                        let candidate = String(chars[i..<(i + noonKey.count)])
+                        if candidate == noonKey {
+                            noonLen = noonKey.count
+                            noonOut = noonMapLocal[noonKey] ?? ""
+                            break
+                        }
                     }
                 }
             }

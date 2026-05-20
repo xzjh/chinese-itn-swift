@@ -135,9 +135,23 @@ enum Measure {
         "顿", "牛", "次", "号", "亩",
     ]
 
+    /// Subset of `unitMap` keys that name a duration. Gated by
+    /// `enableTimeEnglishMapping` so callers can opt to keep these
+    /// units Chinese ("二十分钟" → "20分钟" instead of "20min") while
+    /// other unit mappings still apply.
+    static let timeUnits: Set<String> = [
+        "分钟", "小时", "毫秒", "微秒", "纳秒", "皮秒", "秒",
+    ]
+
     /// Look up a unit name and return its output form (arabized
-    /// abbreviation OR kept Chinese), or nil if not a unit.
-    static func resolveUnit(_ cn: String) -> String? {
+    /// abbreviation OR kept Chinese), or nil if not a unit. When
+    /// `enableTimeEnglishMapping` is false, time-unit subset stays
+    /// Chinese (output equals input).
+    static func resolveUnit(_ cn: String,
+                            enableTimeEnglish: Bool = true) -> String? {
+        if !enableTimeEnglish && timeUnits.contains(cn) {
+            return cn
+        }
         if let en = unitMap[cn] { return en }
         if unitChineseKept.contains(cn) { return cn }
         return nil

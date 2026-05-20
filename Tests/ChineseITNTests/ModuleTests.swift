@@ -50,8 +50,21 @@ final class TimeNormalizeTests: XCTestCase {
     }
 
     func testNoonPrefixMapsToAMPM() {
-        XCTAssertEqual(TimeNormalize.normalize("下午三点四十五分"), "3:45p.m.")
-        XCTAssertEqual(TimeNormalize.normalize("上午十点零五分"), "10:05a.m.")
+        // enableTimeEnglishMapping is off in `.default`; gate via
+        // weTextLibraryDefault preset to verify the mapping still works.
+        XCTAssertEqual(
+            TimeNormalize.normalize("下午三点四十五分", config: .weTextLibraryDefault),
+            "3:45p.m.")
+        XCTAssertEqual(
+            TimeNormalize.normalize("上午十点零五分", config: .weTextLibraryDefault),
+            "10:05a.m.")
+    }
+
+    /// Under default config the noon prefix stays Chinese, time still
+    /// converts.
+    func testNoonPrefixKeptUnderDefault() {
+        XCTAssertEqual(TimeNormalize.normalize("下午三点四十五分"), "下午3:45")
+        XCTAssertEqual(TimeNormalize.normalize("上午十点零五分"), "上午10:05")
     }
 
     func testNoonPrefixUnmappedKept() {

@@ -168,6 +168,154 @@ final class ConfigFlagsTests: XCTestCase {
         XCTAssertEqual(ChineseITN.normalize("两千五百万", config: cfg), "2500万")
     }
 
+    // MARK: - enable_special_tilde
+
+    /// Default (`enableSpecialTilde=false`): tilde-range output is
+    /// NOT emitted. Instead the same span emits an identity candidate
+    /// (output = input) at the same SpecialCardinal weight, so the
+    /// lattice picks the verbatim Chinese phrase over any partial
+    /// Cardinal sub-span match like "三五百" → "三500".
+    func testSpecialTildeOffKeepsTildeKeysVerbatim() {
+        // Pure digit pair (no Cardinal sub-span possible).
+        XCTAssertEqual(ChineseITN.normalize("一二未知"), "一二未知")
+        XCTAssertEqual(ChineseITN.normalize("三四明天到"), "三四明天到")
+        // Tilde keys that overlap a valid Cardinal sub-span — identity
+        // emit wins on cost vs char-fallback + Cardinal partial.
+        XCTAssertEqual(ChineseITN.normalize("三五百"), "三五百")
+        XCTAssertEqual(ChineseITN.normalize("五六十"), "五六十")
+        XCTAssertEqual(ChineseITN.normalize("三四万"), "三四万")
+        XCTAssertEqual(ChineseITN.normalize("一二十"), "一二十")
+        XCTAssertEqual(ChineseITN.normalize("六七千"), "六七千")
+    }
+
+    /// Identity emit only applies to tilde-key spans. Plain valid
+    /// Cardinal expressions (no tilde-key prefix) still convert.
+    func testSpecialTildeOffDoesNotBlockPlainCardinals() {
+        XCTAssertEqual(ChineseITN.normalize("五百"), "500")
+        XCTAssertEqual(ChineseITN.normalize("六十"), "60")
+        XCTAssertEqual(ChineseITN.normalize("一千二百三十四"), "1234")
+    }
+
+    /// TP: enable_special_tilde=true emits tilde ranges (WeText
+    /// library behavior). Used by `.weTextLibraryDefault` /
+    /// `.weTextOfficialTest` presets.
+    func testEnableSpecialTildeProducesRanges() {
+        var cfg = ChineseITNConfig.default
+        cfg.enableSpecialTilde = true
+        XCTAssertEqual(ChineseITN.normalize("一二未知", config: cfg), "1~2未知")
+        XCTAssertEqual(ChineseITN.normalize("三五百", config: cfg), "300~500")
+        XCTAssertEqual(ChineseITN.normalize("三四万", config: cfg), "3~4万")
+        XCTAssertEqual(ChineseITN.normalize("五六十", config: cfg), "50~60")
+    }
+
+    /// FP: special_tilde flag does NOT change regular cardinals,
+    /// decimals, or special_dash forms.
+    func testSpecialTildeFlagDoesNotAffectOtherForms() {
+        var cfg = ChineseITNConfig.default
+        cfg.enableSpecialTilde = false
+        // Regular cardinals
+        XCTAssertEqual(ChineseITN.normalize("两千五百万", config: cfg), "2500万")
+        // Decimal
+        XCTAssertEqual(ChineseITN.normalize("三点一四", config: cfg), "3.14")
+        // special_dash (separate feature — NOT gated by this flag)
+        XCTAssertEqual(ChineseITN.normalize("十五六", config: cfg), "15-6")
+        XCTAssertEqual(ChineseITN.normalize("七百三四十", config: cfg), "730-40")
+    }
+
+    // MARK: - enable_time_english_mapping
+
+    /// Default (`enableTimeEnglishMapping=false`): noon prefix words
+    /// stay Chinese; time portion still converts to HH:MM.
+    func testDefaultKeepsNoonPrefixChinese() {
+        XCTAssertEqual(ChineseITN.normalize("早上十点半"), "早上10:30")
+        XCTAssertEqual(ChineseITN.normalize("下午三点四十五分"), "下午3:45")
+        XCTAssertEqual(ChineseITN.normalize("晚上八点"), "晚上八点")  // hour-only → Cardinal/Decimal fall-through
+        XCTAssertEqual(ChineseITN.normalize("上午十点零五分"), "上午10:05")
+    }
+
+    /// Default keeps time-unit words Chinese (分钟/小时/秒/毫秒/微秒).
+    /// Other SI units (千克→kg, 公里→km) still convert.
+    func testDefaultKeepsTimeUnitsChinese() {
+        XCTAssertEqual(ChineseITN.normalize("等二十分钟"), "等20分钟")
+        XCTAssertEqual(ChineseITN.normalize("两个小时"), "两个小时")  // 个 不是unit, 两 单digit
+        XCTAssertEqual(ChineseITN.normalize("跑十公里"), "跑10km")
+        XCTAssertEqual(ChineseITN.normalize("重二十千克"), "重20kg")
+        XCTAssertEqual(ChineseITN.normalize("延迟一百毫秒"), "延迟100毫秒")
+        XCTAssertEqual(ChineseITN.normalize("十二个小时"), "12个小时")
+    }
+
+    /// TP: enable_time_english_mapping=true converts noon prefix and
+    /// time units to English short forms (WeText library behavior).
+    func testEnableTimeEnglishMappingConverts() {
+        var cfg = ChineseITNConfig.default
+        cfg.enableTimeEnglishMapping = true
+        XCTAssertEqual(ChineseITN.normalize("早上十点半", config: cfg), "10:30a.m.")
+        XCTAssertEqual(ChineseITN.normalize("下午三点四十五分", config: cfg), "3:45p.m.")
+        XCTAssertEqual(ChineseITN.normalize("等二十分钟", config: cfg), "等20min")
+        XCTAssertEqual(ChineseITN.normalize("延迟一百毫秒", config: cfg), "延迟100ms")
+    }
+
+    /// FP: time mapping flag does NOT affect other measure units or
+    /// decimals.
+    func testTimeMappingFlagDoesNotAffectOtherUnits() {
+        var cfg = ChineseITNConfig.default
+        cfg.enableTimeEnglishMapping = false
+        XCTAssertEqual(ChineseITN.normalize("跑十公里", config: cfg), "跑10km")
+        XCTAssertEqual(ChineseITN.normalize("重二十千克", config: cfg), "重20kg")
+        XCTAssertEqual(ChineseITN.normalize("三点一四", config: cfg), "3.14")
+    }
+
+    /// Words not in the noon map ("凌晨") are unaffected by the flag —
+    /// they always stay Chinese.
+    func testNoonPrefixNotInMapAlwaysKept() {
+        for cfg in [ChineseITNConfig.default,
+                    ChineseITNConfig.weTextLibraryDefault] {
+            XCTAssertEqual(
+                ChineseITN.normalize("凌晨三点半", config: cfg), "凌晨3:30")
+        }
+    }
+
+    // MARK: - 几X family whitelist
+
+    /// `几十/几百/几千/...` style approximate quantifiers are whitelist-
+    /// protected, so WeText's "半converted" `几10/几100/几1000` output
+    /// is replaced by the verbatim Chinese phrase.
+    func testJiFamilyKeptVerbatim() {
+        let phrases = [
+            "几十", "几百", "几千", "几万",
+            "几十万", "几百万", "几千万",
+            "几亿", "几十亿", "几百亿", "几千亿", "几万亿",
+        ]
+        for phrase in phrases {
+            XCTAssertEqual(ChineseITN.normalize(phrase), phrase,
+                           "Ji-quantifier should stay Chinese: \(phrase)")
+        }
+    }
+
+    /// 几X embedded in a sentence keeps the phrase, surrounding
+    /// numeric content still normalizes.
+    func testJiFamilyInSentence() {
+        XCTAssertEqual(
+            ChineseITN.normalize("几十、一百个字符"),
+            "几十、100个字符")
+        XCTAssertEqual(
+            ChineseITN.normalize("总共几千万人"),
+            "总共几千万人")
+        XCTAssertEqual(
+            ChineseITN.normalize("几亿人民"),
+            "几亿人民")
+    }
+
+    /// 几X protection applies under all configs (it's whitelist,
+    /// not flag-gated).
+    func testJiFamilyKeptUnderWeTextPresets() {
+        for cfg in [ChineseITNConfig.weTextLibraryDefault,
+                    ChineseITNConfig.weTextOfficialTest] {
+            XCTAssertEqual(ChineseITN.normalize("几十", config: cfg), "几十")
+            XCTAssertEqual(ChineseITN.normalize("几亿", config: cfg), "几亿")
+        }
+    }
+
     // MARK: - Preset: weTextOfficialTest
 
     /// The preset bundles standalone=true + 0_to_9=true to match

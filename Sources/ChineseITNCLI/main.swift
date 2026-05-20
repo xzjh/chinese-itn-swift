@@ -4,14 +4,21 @@
 // JSONL caller to encode if needed).
 //
 // Flags:
-//   --enable-0-to-9     Single Chinese digit chars (一..九, 零) convert
-//                       standalone. Default off (WeText library default).
-//   --official-test     Preset matching WeTextProcessing's official
-//                       test config: enable_0_to_9=true.
-//   --no-interjections  Disable interjection (呃/啊) removal. Default
-//                       removes them (WeText default).
-//   --enable-million    Extend 万 prefix to thousand/hundred coefficients.
-//                       Default off.
+//   --enable-0-to-9         Single Chinese digit chars (一..九, 零) convert
+//                           standalone. Default off (WeText library default).
+//   --enable-special-tilde  Spoken approximate ranges emit tilde forms
+//                           ("一二"→"1~2", "三五百"→"300~500"). Default off
+//                           (our library default; WeText defaults this on).
+//   --enable-time-english   Map noon prefix (早上→a.m.) and time units
+//                           (分钟→min, 小时→h). Default off (kept Chinese).
+//   --library-default       Preset matching WeText InverseNormalizer() no-arg
+//                           constructor. Implies --enable-special-tilde.
+//   --official-test         Preset matching WeTextProcessing's official
+//                           test config: enable_0_to_9=true + special_tilde=true.
+//   --no-interjections      Disable interjection (呃/啊) removal. Default
+//                           removes them (WeText default).
+//   --enable-million        Extend 万 prefix to thousand/hundred coefficients.
+//                           Default off.
 //
 // Examples:
 //   echo "内存占用四点零八个G" | chinese-itn
@@ -30,6 +37,12 @@ func parseArgs() -> ChineseITNConfig {
         switch a {
         case "--enable-0-to-9":
             cfg.enable0To9 = true
+        case "--enable-special-tilde":
+            cfg.enableSpecialTilde = true
+        case "--enable-time-english":
+            cfg.enableTimeEnglishMapping = true
+        case "--library-default":
+            cfg = .weTextLibraryDefault
         case "--official-test":
             cfg = .weTextOfficialTest
         case "--no-interjections":
@@ -49,6 +62,9 @@ func parseArgs() -> ChineseITNConfig {
 
             Flags:
               --enable-0-to-9            convert single 一..九, 零 standalone
+              --enable-special-tilde     emit spoken-range tilde forms (一二→1~2)
+              --enable-time-english      map 早上→a.m. and 分钟→min etc.
+              --library-default          preset matching WeText InverseNormalizer()
               --official-test            preset matching WeText official tests
               --no-interjections         keep 呃/啊 fillers
               --enable-million           千/百+万 fully arabize (vs keep 万 suffix)

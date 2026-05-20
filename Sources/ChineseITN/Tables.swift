@@ -56,6 +56,13 @@ let whitelistTerms: [String] = [
     "几十万", "几百万", "几千万",
     "十几万", "二十几万", "三十几万", "四十几万", "五十几万",
     "六十几万", "七十几万", "八十几万", "九十几万",
+    // 几 + magnitude estimates — kept Chinese verbatim. WeText
+    // emits half-converted "几10/几100/几1000" for plain forms (it
+    // models 十/百/千 as numbers but not 几), and falls through to
+    // these full forms unchanged. Both behaviors are undesirable
+    // downstream; treat the whole phrase as an idiom.
+    "几十", "几百", "几千", "几万",
+    "几亿", "几十亿", "几百亿", "几千亿", "几万亿",
     // 7x24, 4S店
     "七乘二十四小时", "七乘二十四个小时", "四S店", "四s店",
 

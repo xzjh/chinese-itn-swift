@@ -73,8 +73,9 @@ immutable lookup tables); call from any queue.
 ### Configuration
 
 `ChineseITN.normalize(_:config:)` takes an optional `ChineseITNConfig`.
-All four flags mirror WeTextProcessing's `InverseNormalizer()`
-parameters with identical names and semantics.
+Most flags mirror WeTextProcessing's `InverseNormalizer()` parameters
+with identical names and semantics. `enableSpecialTilde` diverges
+from WeText library default (False here vs True upstream).
 
 | Flag | Default | Effect when set to the non-default |
 |------|---------|------------------------------------|
@@ -82,10 +83,13 @@ parameters with identical names and semantics.
 | `enable0To9` | `false` | `true` → single Chinese digit chars convert standalone (`一` → `1`, `零` → `0`). Default keeps them Chinese to avoid spurious conversion of `一个 / 一会` etc. |
 | `enableMillion` | `false` | `true` → 千/百 + 万 fully arabize (`两千五百万` → `25000000`) instead of keeping `万` as a readability marker (`两千五百万` → `2500万`). `亿` is still kept as a text marker regardless. |
 | `removeInterjections` | `true` | `false` → `呃` / `啊` fillers stay in the output. Default removes them per WeText `data/default/blacklist.tsv`. |
+| `enableSpecialTilde` | `false` | `true` → spoken approximate ranges emit tilde forms (`一二` → `1~2`, `三五百` → `300~500`, `三四万` → `3~4万`). Default keeps the pure-digit pair forms Chinese so a downstream LLM can decide. WeText library defaults this to True; we default to False. |
+| `enableTimeEnglishMapping` | `false` | `true` → noon-prefix words map to a.m./p.m. (`早上十点半` → `10:30a.m.`) and time units map to English abbreviations (`二十分钟` → `20min`, `两个小时` → `2h`, `一百毫秒` → `100ms`). Default keeps both Chinese (`早上10:30`, `20分钟`). Other unit mappings (`千克`→kg, `公里`→km) are unaffected. WeText library defaults this to True; we default to False. |
 
-Two presets:
-- `ChineseITNConfig.default` — matches WeText `InverseNormalizer()` constructor defaults (recommended for real ASR post-processing).
-- `ChineseITNConfig.weTextOfficialTest` — matches the config WeText uses to run its own `test/data/*.txt` corpus (`enableStandaloneNumber=true, enable0To9=true`). Use this if you want to reproduce WeText official-corpus numbers byte-for-byte.
+Three presets:
+- `ChineseITNConfig.default` — recommended for real ASR post-processing where a downstream LLM handles range / approximate-quantifier interpretation. Diverges from WeText library defaults only on `enableSpecialTilde` (False here vs True upstream).
+- `ChineseITNConfig.weTextLibraryDefault` — matches WeText `InverseNormalizer()` no-arg constructor exactly (all flags including `enableSpecialTilde=true`). Use this when validating against fixtures generated from the upstream library.
+- `ChineseITNConfig.weTextOfficialTest` — matches the config WeText uses to run its own `test/data/*.txt` corpus (`enableStandaloneNumber=true, enable0To9=true, enableSpecialTilde=true`). Use this to reproduce WeText official-corpus numbers byte-for-byte.
 
 ```swift
 var cfg = ChineseITNConfig.default
@@ -98,9 +102,12 @@ CLI equivalents (in the `chinese-itn` executable):
 
 ```
 chinese-itn --enable-0-to-9               # enable0To9 = true
+chinese-itn --enable-special-tilde        # enableSpecialTilde = true
+chinese-itn --enable-time-english         # enableTimeEnglishMapping = true
 chinese-itn --enable-million              # enableMillion = true
 chinese-itn --disable-standalone-number   # enableStandaloneNumber = false
 chinese-itn --no-interjections            # removeInterjections = false
+chinese-itn --library-default             # use the weTextLibraryDefault preset
 chinese-itn --official-test               # use the weTextOfficialTest preset
 ```
 
@@ -119,7 +126,7 @@ chinese-itn --official-test               # use the weTextOfficialTest preset
 | LicensePlate    | 京A幺二三四五 → 京A12345 (31 province chars + alpha + 5–6 char body) |
 | Electronic      | spaced URL "w w w 点 X 点 Y" → www.X.Y                          |
 | SpecialCardinal | special_tilde ranges (三五百 → 300~500, 五六十 → 50~60, 三四万 → 3~4万); special_dash ranges (十五六 → 15-6, 四十五六 → 45-6, 七百三四十 → 730-40, 一万六七 → 16000-7000) |
-| Whitelist       | 120+ idioms / fixed phrases protected from any digit conversion (一帆风顺, 百闻不如一见, 三心二意, 乱七八糟, 十几万, 三亚, 九寨沟, 星期一/二/三/..., 二维码, ...) |
+| Whitelist       | 130+ idioms / fixed phrases protected from any digit conversion (一帆风顺, 百闻不如一见, 三心二意, 乱七八糟, 十几万, 三亚, 九寨沟, 星期一/二/三/..., 二维码, ...) including the 几X approximate-quantifier family (几十/几百/几千/几万/几亿/几十亿/...) — kept verbatim to avoid WeText's half-converted "几10" output |
 
 Architecture: every module is a "tagger" that emits weighted
 candidate edges over the input. A topological-DP shortest-path
@@ -240,7 +247,8 @@ let out = ChineseITN.normalize("内存占用四点零八个G")
 ### 配置
 
 `ChineseITN.normalize(_:config:)` 接受可选的 `ChineseITNConfig`。
-所有4个flag跟WeTextProcessing的`InverseNormalizer()`参数同名同语义。
+大部分flag跟WeTextProcessing的`InverseNormalizer()`参数同名同语义。
+`enableSpecialTilde`是本库特有flag（默认False；WeText默认True）。
 
 | Flag | 默认 | 非默认时的效果 |
 |------|------|----------------|
@@ -248,10 +256,13 @@ let out = ChineseITN.normalize("内存占用四点零八个G")
 | `enable0To9` | `false` | `true` → 单字数字standalone转阿拉伯（`一` → `1`，`零` → `0`）。默认保留中文，避免`一个 / 一会`等误转。 |
 | `enableMillion` | `false` | `true` → 千/百 + 万 完全展开（`两千五百万` → `25000000`），不保留`万`作为readability标记。`亿`始终保留为文本标记。 |
 | `removeInterjections` | `true` | `false` → 保留`呃` / `啊`等filler。默认删除（按WeText `data/default/blacklist.tsv`）。 |
+| `enableSpecialTilde` | `false` | `true` → 口语近似范围emit波浪号形态（`一二` → `1~2`，`三五百` → `300~500`，`三四万` → `3~4万`）。默认保留纯数字对的中文形态，让下游LLM自己决定区间表达。WeText库默认为True，本库默认False。 |
+| `enableTimeEnglishMapping` | `false` | `true` → 时段词转a.m./p.m.（`早上十点半` → `10:30a.m.`），时间单位转英文缩写（`二十分钟` → `20min`，`两个小时` → `2h`，`一百毫秒` → `100ms`）。默认两者都保留中文（`早上10:30`，`20分钟`）。其他单位（`千克`→kg、`公里`→km）不受影响。WeText库默认为True，本库默认False。 |
 
-两个preset：
-- `ChineseITNConfig.default` —— 跟WeText `InverseNormalizer()`构造函数默认值一致（推荐用于真实ASR后处理）。
-- `ChineseITNConfig.weTextOfficialTest` —— 跟WeText跑自己`test/data/*.txt`官方corpus用的config一致（`enableStandaloneNumber=true, enable0To9=true`）。复现WeText官方测试集逐字节parity时用这个。
+三个preset：
+- `ChineseITNConfig.default` —— 推荐用于真实ASR后处理（下游有LLM处理范围/估数解读）。仅在`enableSpecialTilde`上与WeText库默认值不同（本库False，上游True）。
+- `ChineseITNConfig.weTextLibraryDefault` —— 跟WeText `InverseNormalizer()`无参构造完全一致（含`enableSpecialTilde=true`）。当需要对照上游库生成的fixture验证时使用。
+- `ChineseITNConfig.weTextOfficialTest` —— 跟WeText跑自己`test/data/*.txt`官方corpus用的config一致（`enableStandaloneNumber=true, enable0To9=true, enableSpecialTilde=true`）。复现WeText官方测试集逐字节parity时用这个。
 
 ```swift
 var cfg = ChineseITNConfig.default
@@ -264,9 +275,12 @@ CLI对应flag（`chinese-itn`可执行文件）：
 
 ```
 chinese-itn --enable-0-to-9               # enable0To9 = true
+chinese-itn --enable-special-tilde        # enableSpecialTilde = true
+chinese-itn --enable-time-english         # enableTimeEnglishMapping = true
 chinese-itn --enable-million              # enableMillion = true
 chinese-itn --disable-standalone-number   # enableStandaloneNumber = false
 chinese-itn --no-interjections            # removeInterjections = false
+chinese-itn --library-default             # 用weTextLibraryDefault preset
 chinese-itn --official-test               # 用weTextOfficialTest preset
 ```
 
@@ -285,7 +299,7 @@ chinese-itn --official-test               # 用weTextOfficialTest preset
 | LicensePlate    | 京A幺二三四五 → 京A12345（31个省份字符 + 字母 + 5–6字符车号） |
 | Electronic      | 空格分隔URL "w w w 点 X 点 Y" → www.X.Y                       |
 | SpecialCardinal | special_tilde范围（三五百 → 300~500，五六十 → 50~60，三四万 → 3~4万）；special_dash范围（十五六 → 15-6，四十五六 → 45-6，七百三四十 → 730-40，一万六七 → 16000-7000） |
-| Whitelist       | 120+条成语 / 固定搭配保护，不做任何数字转换（一帆风顺、百闻不如一见、三心二意、乱七八糟、十几万、三亚、九寨沟、星期一/二/三/...、二维码等） |
+| Whitelist       | 130+条成语 / 固定搭配保护，不做任何数字转换（一帆风顺、百闻不如一见、三心二意、乱七八糟、十几万、三亚、九寨沟、星期一/二/三/...、二维码等），包含几X估数家族（几十/几百/几千/几万/几亿/几十亿/...）—— 避免WeText的"几10"半成品输出 |
 
 架构：每个模块是一个 tagger，扫描输入并发出带权重的candidate
 边。一个 topological-DP shortest-path solver 选出总成本最低的

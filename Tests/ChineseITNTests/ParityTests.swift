@@ -38,7 +38,7 @@ final class ParityTests: XCTestCase {
         var pass = 0
         var fail: [(Fixture, String)] = []
         for fx in Self.fixtures {
-            let actual = ChineseITN.normalize(fx.input)
+            let actual = ChineseITN.normalize(fx.input, config: .weTextLibraryDefault)
             if actual == fx.expected {
                 pass += 1
             } else {
@@ -79,7 +79,7 @@ final class ParityTests: XCTestCase {
         }
         var failures: [(Fixture, String)] = []
         for fx in cases {
-            let actual = ChineseITN.normalize(fx.input)
+            let actual = ChineseITN.normalize(fx.input, config: .weTextLibraryDefault)
             if actual != fx.expected {
                 failures.append((fx, actual))
             }
