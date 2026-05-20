@@ -327,7 +327,8 @@
     "category": "measure",
     "source": "WeText official",
     "input": "一千克",
-    "expected": "1kg"
+    "expected": "1kg",
+    "expected_swift": "1 kg"
   },
   {
     "category": "measure",
@@ -369,25 +370,29 @@
     "category": "measure",
     "source": "WeText official",
     "input": "每小时十公里",
-    "expected": "10km/h"
+    "expected": "10km/h",
+    "expected_swift": "10 km/h"
   },
   {
     "category": "measure",
     "source": "WeText official",
     "input": "每小时十千米",
-    "expected": "10km/h"
+    "expected": "10km/h",
+    "expected_swift": "10 km/h"
   },
   {
     "category": "measure",
     "source": "WeText official",
     "input": "十千米每小时",
-    "expected": "10km/h"
+    "expected": "10km/h",
+    "expected_swift": "10 km/h"
   },
   {
     "category": "measure",
     "source": "WeText official",
     "input": "三百二十四点七五克",
-    "expected": "324.75g"
+    "expected": "324.75g",
+    "expected_swift": "324.75 g"
   },
   {
     "category": "measure",
@@ -471,7 +476,8 @@
     "category": "measure",
     "source": "WeText official",
     "input": "这块黄金重达三百二十四点七五克,我再随便来几个价格三十四点五二一元,二十点一万",
-    "expected": "这块黄金重达324.75g,我再随便来几个价格¥34.521,20.1万"
+    "expected": "这块黄金重达324.75g,我再随便来几个价格¥34.521,20.1万",
+    "expected_swift": "这块黄金重达324.75 g,我再随便来几个价格¥34.521,20.1万"
   },
   {
     "category": "measure",
@@ -495,31 +501,36 @@
     "category": "measure",
     "source": "WeText official",
     "input": "十一到一百千米每小时",
-    "expected": "11~100km/h"
+    "expected": "11~100km/h",
+    "expected_swift": "11~100 km/h"
   },
   {
     "category": "measure",
     "source": "WeText official",
     "input": "每小时三十到三百一十一千米",
-    "expected": "30~311km/h"
+    "expected": "30~311km/h",
+    "expected_swift": "30~311 km/h"
   },
   {
     "category": "measure",
     "source": "WeText official",
     "input": "七八公斤",
-    "expected": "7~8kg"
+    "expected": "7~8kg",
+    "expected_swift": "7~8 kg"
   },
   {
     "category": "measure",
     "source": "WeText official",
     "input": "五六十摩尔",
-    "expected": "50~60mol"
+    "expected": "50~60mol",
+    "expected_swift": "50~60 mol"
   },
   {
     "category": "measure",
     "source": "WeText official",
     "input": "三五百公里",
-    "expected": "300~500km"
+    "expected": "300~500km",
+    "expected_swift": "300~500 km"
   },
   {
     "category": "measure",
@@ -531,13 +542,15 @@
     "category": "measure",
     "source": "WeText official",
     "input": "三四万伏特",
-    "expected": "3~4Wv"
+    "expected": "3~4Wv",
+    "expected_swift": "3~4 Wv"
   },
   {
     "category": "measure",
     "source": "WeText official",
     "input": "十五六千瓦时",
-    "expected": "15-6kwh"
+    "expected": "15-6kwh",
+    "expected_swift": "15-6 kwh"
   },
   {
     "category": "measure",
@@ -549,13 +562,15 @@
     "category": "measure",
     "source": "WeText official",
     "input": "七百三四十秒",
-    "expected": "730-40s"
+    "expected": "730-40s",
+    "expected_swift": "730-40 s"
   },
   {
     "category": "measure",
     "source": "WeText official",
     "input": "七百三四十分钟",
-    "expected": "730-40min"
+    "expected": "730-40min",
+    "expected_swift": "730-40 min"
   },
   {
     "category": "measure",
@@ -645,25 +660,29 @@
     "category": "time",
     "source": "WeText official",
     "input": "上午一点零二分三十六秒",
-    "expected": "1:02:36a.m."
+    "expected": "1:02:36a.m.",
+    "expected_swift": "1:02:36 a.m."
   },
   {
     "category": "time",
     "source": "WeText official",
     "input": "早上一点零二",
-    "expected": "1:02a.m."
+    "expected": "1:02a.m.",
+    "expected_swift": "1:02 a.m."
   },
   {
     "category": "time",
     "source": "WeText official",
     "input": "早上一点零二分",
-    "expected": "1:02a.m."
+    "expected": "1:02a.m.",
+    "expected_swift": "1:02 a.m."
   },
   {
     "category": "time",
     "source": "WeText official",
     "input": "晚上一点零二分",
-    "expected": "1:02p.m."
+    "expected": "1:02p.m.",
+    "expected_swift": "1:02 p.m."
   },
   {
     "category": "time",
@@ -675,7 +694,8 @@
     "category": "time",
     "source": "WeText official",
     "input": "下午八点零五分",
-    "expected": "8:05p.m."
+    "expected": "8:05p.m.",
+    "expected_swift": "8:05 p.m."
   },
   {
     "category": "time",
@@ -699,7 +719,8 @@
     "category": "time",
     "source": "WeText official",
     "input": "时间上是零点十分登机,八点五分下飞机,八点三十去吃早饭.你是说八点零五分下飞机还是八点零五下飞机?我可能下午三点四十,或者上午十点半再或者下午三点四十一分去找你",
-    "expected": "时间上是00:10登机,8.5分下飞机,8:30去吃早饭.你是说8:05下飞机还是8:05下飞机?我可能3:40p.m.,或者10:30a.m.再或者3:41p.m.去找你"
+    "expected": "时间上是00:10登机,8.5分下飞机,8:30去吃早饭.你是说8:05下飞机还是8:05下飞机?我可能3:40p.m.,或者10:30a.m.再或者3:41p.m.去找你",
+    "expected_swift": "时间上是00:10登机,8.5分下飞机,8:30去吃早饭.你是说8:05下飞机还是8:05下飞机?我可能3:40 p.m.,或者10:30 a.m.再或者3:41 p.m.去找你"
   },
   {
     "category": "whitelist",
@@ -1035,7 +1056,8 @@
     "category": "normalizer",
     "source": "WeText official",
     "input": "上午八点半准时开会",
-    "expected": "8:30a.m.准时开会"
+    "expected": "8:30a.m.准时开会",
+    "expected_swift": "8:30 a.m.准时开会"
   },
   {
     "category": "normalizer",
@@ -1083,25 +1105,29 @@
     "category": "normalizer",
     "source": "WeText official",
     "input": "重达二十五千克",
-    "expected": "重达25kg"
+    "expected": "重达25kg",
+    "expected_swift": "重达25 kg"
   },
   {
     "category": "normalizer",
     "source": "WeText official",
     "input": "最高气温三十八摄氏度",
-    "expected": "最高气温38°C"
+    "expected": "最高气温38°C",
+    "expected_swift": "最高气温38 °C"
   },
   {
     "category": "normalizer",
     "source": "WeText official",
     "input": "实际面积一百二十平方米",
-    "expected": "实际面积120m²"
+    "expected": "实际面积120m²",
+    "expected_swift": "实际面积120 m²"
   },
   {
     "category": "normalizer",
     "source": "WeText official",
     "input": "渲染速度十毫秒一帧",
-    "expected": "渲染速度10ms1帧"
+    "expected": "渲染速度10ms1帧",
+    "expected_swift": "渲染速度10 ms1帧"
   },
   {
     "category": "normalizer",

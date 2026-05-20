@@ -52,12 +52,12 @@ final class OfficialParityTests: XCTestCase {
             // (see WeText itn/chinese/test/normalizer_test.py). Use the
             // matching preset so single Chinese digits also convert.
             let actual = ChineseITN.normalize(fx.input, config: .weTextOfficialTest)
-            let isPass = actual == fx.expected
+            let isPass = actual == fx.target
             if isPass { pass += 1 } else {
                 failures.append([
                     "category": fx.category,
                     "input": fx.input,
-                    "expected": fx.expected,
+                    "expected": fx.target,
                     "actual": actual,
                 ])
             }

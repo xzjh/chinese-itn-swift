@@ -1023,7 +1023,7 @@ extension Measure {
                                       else { continue }
                                 out.append(Candidate(
                                     startIdx: i, endIdx: nuEnd,
-                                    output: "\(valueStr)\(numerEN)/\(denomEN)",
+                                    output: "\(valueStr)\(unitSep(numerEN))\(numerEN)/\(denomEN)",
                                     weight: TaggerWeight.measure,
                                     source: "measure_per_prefix"
                                 ))
@@ -1051,7 +1051,7 @@ extension Measure {
                               let unitOut = resolveUnit(unit, enableTimeEnglish: config.enableTimeEnglishMapping) else { continue }
                         out.append(Candidate(
                             startIdx: i, endIdx: uEnd,
-                            output: "\(tildeVal)\(unitOut)",
+                            output: "\(tildeVal)\(unitSep(unitOut))\(unitOut)",
                             weight: TaggerWeight.measure,
                             source: "measure_tilde_unit"
                         ))
@@ -1067,7 +1067,7 @@ extension Measure {
                                       let unitOut = resolveUnit(unit, enableTimeEnglish: config.enableTimeEnglishMapping) else { continue }
                                 out.append(Candidate(
                                     startIdx: i, endIdx: uEnd,
-                                    output: "\(tildeVal)\(c)\(unitOut)",
+                                    output: "\(tildeVal)\(c)\(unitSep(unitOut))\(unitOut)",
                                     weight: TaggerWeight.measure,
                                     source: "measure_tilde_suffix_unit"
                                 ))
@@ -1082,7 +1082,7 @@ extension Measure {
                               let unitOut = resolveUnit(unit, enableTimeEnglish: config.enableTimeEnglishMapping) else { continue }
                         out.append(Candidate(
                             startIdx: i, endIdx: uEnd,
-                            output: "\(tildeVal)\(unitOut)",
+                            output: "\(tildeVal)\(unitSep(unitOut))\(unitOut)",
                             weight: TaggerWeight.measure,
                             source: "measure_tilde_unit"
                         ))
@@ -1109,7 +1109,7 @@ extension Measure {
                               let unitOut = resolveUnit(unit, enableTimeEnglish: config.enableTimeEnglishMapping) else { continue }
                         out.append(Candidate(
                             startIdx: i, endIdx: uEnd,
-                            output: "\(leadStr)\(dashVal)\(unitOut)",
+                            output: "\(leadStr)\(dashVal)\(unitSep(unitOut))\(unitOut)",
                             weight: TaggerWeight.measure,
                             source: "measure_dash_unit"
                         ))
@@ -1205,7 +1205,7 @@ extension Measure {
             guard let unitOut = resolveUnit(unit, enableTimeEnglish: enableTimeEnglish) else { continue }
             out.append(Candidate(
                 startIdx: startIdx, endIdx: uEnd,
-                output: "\(valueStr)\(unitOut)",
+                output: "\(valueStr)\(unitSep(unitOut))\(unitOut)",
                 weight: TaggerWeight.measure,
                 source: source
             ))
@@ -1300,7 +1300,9 @@ extension TimeNormalize {
                   let mOut = minuteMap[minuteM.key] else { continue }
             var output = "\(hOut):\(mOut)"
             if !secondOut.isEmpty { output += ":\(secondOut)" }
-            output += noonOut
+            // NIST SP 811 §10.3: a.m./p.m. is separated from the time
+            // by a space ("3:45 p.m.").
+            if !noonOut.isEmpty { output += " \(noonOut)" }
 
             out.append(Candidate(
                 startIdx: i,

@@ -54,10 +54,10 @@ final class TimeNormalizeTests: XCTestCase {
         // weTextLibraryDefault preset to verify the mapping still works.
         XCTAssertEqual(
             TimeNormalize.normalize("下午三点四十五分", config: .weTextLibraryDefault),
-            "3:45p.m.")
+            "3:45 p.m.")
         XCTAssertEqual(
             TimeNormalize.normalize("上午十点零五分", config: .weTextLibraryDefault),
-            "10:05a.m.")
+            "10:05 a.m.")
     }
 
     /// Under default config the noon prefix stays Chinese, time still

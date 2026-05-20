@@ -435,13 +435,15 @@
     "category": "time",
     "source": "WeText",
     "input": "下午三点四十五分",
-    "expected": "3:45p.m."
+    "expected": "3:45p.m.",
+    "expected_swift": "3:45 p.m."
   },
   {
     "category": "time",
     "source": "WeText",
     "input": "下午三点半",
-    "expected": "3:30p.m."
+    "expected": "3:30p.m.",
+    "expected_swift": "3:30 p.m."
   },
   {
     "category": "time",
@@ -471,7 +473,8 @@
     "category": "time",
     "source": "WeText",
     "input": "傍晚六点半",
-    "expected": "6:30p.m."
+    "expected": "6:30p.m.",
+    "expected_swift": "6:30 p.m."
   },
   {
     "category": "time",
@@ -489,13 +492,15 @@
     "category": "time",
     "source": "WeText",
     "input": "上午十点零五分",
-    "expected": "10:05a.m."
+    "expected": "10:05a.m.",
+    "expected_swift": "10:05 a.m."
   },
   {
     "category": "time",
     "source": "WeText",
     "input": "晚上十一点二十分",
-    "expected": "11:20p.m."
+    "expected": "11:20p.m.",
+    "expected_swift": "11:20 p.m."
   },
   {
     "category": "money",
@@ -711,7 +716,8 @@
     "category": "mix",
     "source": "WeText",
     "input": "今天来了五十人开会下午三点半结束",
-    "expected": "今天来了50人开会3:30p.m.结束"
+    "expected": "今天来了50人开会3:30p.m.结束",
+    "expected_swift": "今天来了50人开会3:30 p.m.结束"
   },
   {
     "category": "date",

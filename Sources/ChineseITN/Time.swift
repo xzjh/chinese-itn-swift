@@ -11,11 +11,12 @@
 //   tagger = (noon)? + hour + minute + (delete'分')? + (second)?
 //   verbalize = hour + ':' + minute + (':' + second)? + noon?
 //
-// Examples per WeText official test/data/time.txt:
+// Examples per WeText official test/data/time.txt (we differ from
+// WeText in adding a space before a.m./p.m. per NIST SP 811 §10.3):
 //   两点零二分           → 2:02
 //   十三点十分三十六秒    → 13:10:36
-//   上午一点零二分三十六秒 → 1:02:36a.m.
-//   早上一点零二          → 1:02a.m.
+//   上午一点零二分三十六秒 → 1:02:36 a.m.
+//   早上一点零二          → 1:02 a.m.
 //   零点十分              → 00:10
 //   八点半                → 8:30
 

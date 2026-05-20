@@ -53,12 +53,12 @@ final class RobustnessTests: XCTestCase {
         var failures: [[String: String]] = []
         for fx in Self.fixtures {
             let actual = ChineseITN.normalize(fx.input, config: .weTextLibraryDefault)
-            let isPass = actual == fx.expected
+            let isPass = actual == fx.target
             if isPass { pass += 1 } else {
                 failures.append([
                     "category": fx.category,
                     "input": fx.input,
-                    "expected": fx.expected,
+                    "expected": fx.target,
                     "actual": actual,
                 ])
             }
@@ -99,7 +99,7 @@ final class RobustnessTests: XCTestCase {
         for fx in Self.fixtures {
             let actual = ChineseITN.normalize(fx.input, config: .weTextLibraryDefault)
             var bc = byCategory[fx.category] ?? (0, 0)
-            if actual == fx.expected { bc.pass += 1 } else { bc.fail += 1 }
+            if actual == fx.target { bc.pass += 1 } else { bc.fail += 1 }
             byCategory[fx.category] = bc
         }
         for (cat, counts) in byCategory {
@@ -139,7 +139,7 @@ final class RobustnessTests: XCTestCase {
         // Under weTextLibraryDefault the mapping fires.
         XCTAssertEqual(
             ChineseITN.normalize("早上一点零二", config: .weTextLibraryDefault),
-            "1:02a.m.")
+            "1:02 a.m.")
     }
 
     func testTPMathCanonical() {

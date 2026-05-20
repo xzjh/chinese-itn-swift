@@ -17,7 +17,7 @@ spoken-form Chinese that ASR systems emit into written form.
 | 两千五百万                     | →   | 2500万                   |
 | 三亿五千万                     | →   | 3亿5000万                |
 | 一千美元                      | →   | $1000                    |
-| 重达二十五千克                  | →   | 重达25kg                 |
+| 重达二十五千克                  | →   | 重达25 kg                |
 | 幺三八幺幺幺零零零零零            | →   | 13811100000              |
 | 京A幺二三四五                  | →   | 京A12345                  |
 | 一加二等于三                    | →   | 1+2=3                    |
@@ -79,12 +79,12 @@ from WeText library default (False here vs True upstream).
 
 | Flag | Default | Effect when set to the non-default |
 |------|---------|------------------------------------|
-| `enableStandaloneNumber` | `true` | `false` → bare cardinal expressions stay in Chinese (`两万` → `两万`). Unit-bound numbers still convert (`一千克` → `1000g`). Drops the Cardinal tagger from the lattice. |
+| `enableStandaloneNumber` | `true` | `false` → bare cardinal expressions stay in Chinese (`两万` → `两万`). Unit-bound numbers still convert (`一千克` → `1000 g`). Drops the Cardinal tagger from the lattice. |
 | `enable0To9` | `false` | `true` → single Chinese digit chars convert standalone (`一` → `1`, `零` → `0`). Default keeps them Chinese to avoid spurious conversion of `一个 / 一会` etc. |
 | `enableMillion` | `false` | `true` → 千/百 + 万 fully arabize (`两千五百万` → `25000000`) instead of keeping `万` as a readability marker (`两千五百万` → `2500万`). `亿` is still kept as a text marker regardless. |
 | `removeInterjections` | `true` | `false` → `呃` / `啊` fillers stay in the output. Default removes them per WeText `data/default/blacklist.tsv`. |
 | `enableSpecialTilde` | `false` | `true` → spoken approximate ranges emit tilde forms (`一二` → `1~2`, `三五百` → `300~500`, `三四万` → `3~4万`). Default keeps the pure-digit pair forms Chinese so a downstream LLM can decide. WeText library defaults this to True; we default to False. |
-| `enableTimeEnglishMapping` | `false` | `true` → noon-prefix words map to a.m./p.m. (`早上十点半` → `10:30a.m.`) and time units map to English abbreviations (`二十分钟` → `20min`, `两个小时` → `2h`, `一百毫秒` → `100ms`). Default keeps both Chinese (`早上10:30`, `20分钟`). Other unit mappings (`千克`→kg, `公里`→km) are unaffected. WeText library defaults this to True; we default to False. |
+| `enableTimeEnglishMapping` | `false` | `true` → noon-prefix words map to a.m./p.m. (`早上十点半` → `10:30 a.m.`) and time units map to English abbreviations (`二十分钟` → `20 min`, `两个小时` → `2 h`, `一百毫秒` → `100 ms`). Default keeps both Chinese (`早上10:30`, `20分钟`). Other unit mappings (`千克`→kg, `公里`→km) are unaffected. A space separates value and English unit symbol per SI / NIST SP 811 / ISO 80000-1 (exception: bare `°` stays glued, e.g. `30°`); WeText emits no space. WeText library defaults this to True; we default to False. |
 
 Three presets:
 - `ChineseITNConfig.default` — recommended for real ASR post-processing where a downstream LLM handles range / approximate-quantifier interpretation. Diverges from WeText library defaults only on `enableSpecialTilde` (False here vs True upstream).
@@ -121,7 +121,7 @@ chinese-itn --official-test               # use the weTextOfficialTest preset
 | Time            | X点Y分 → HH:MM, X点Y分Z秒 → HH:MM:SS, X点半 → HH:30, noon prefix (上午/早上/早晨 → a.m., 下午/晚上/傍晚 → p.m.) |
 | Money           | 元 / 美元 / 欧元 / 英镑 / 港元 / 日元 etc. → symbol or code prefix (¥ $ € £ HKD JPY ...) |
 | Fraction        | X分之Y → Y/X (multi-char numerator and denominator); 百分(之)?X → X%; 百分百 → 100%; 百分之X点Y → X.Y%; 百分之X到Y → X~Y% |
-| Measure         | cardinal / decimal + unit → SI abbreviation (千克 → kg, 公里 → km, 平方米 → m², 摄氏度 → °C, 毫秒 → ms, ~85 mappings); two-pass to prefer multi-char units (二十五千克 → 25kg, not 25000g) |
+| Measure         | cardinal / decimal + unit → SI abbreviation (千克 → kg, 公里 → km, 平方米 → m², 摄氏度 → °C, 毫秒 → ms, ~85 mappings) with a space between value and symbol per SI / NIST SP 811 / ISO 80000-1 (bare `°` excepted); two-pass to prefer multi-char units (二十五千克 → 25 kg, not 25000 g) |
 | Math            | 加 / 减 / 乘 / 除 / 比 / 到 / 等于 → + − × ÷ : ~ =, with chained 负 sign |
 | LicensePlate    | 京A幺二三四五 → 京A12345 (31 province chars + alpha + 5–6 char body) |
 | Electronic      | spaced URL "w w w 点 X 点 Y" → www.X.Y                          |
@@ -252,12 +252,12 @@ let out = ChineseITN.normalize("内存占用四点零八个G")
 
 | Flag | 默认 | 非默认时的效果 |
 |------|------|----------------|
-| `enableStandaloneNumber` | `true` | `false` → 纯cardinal表达式保留中文（`两万` → `两万`）。带单位的数字依然转换（`一千克` → `1000g`）。Cardinal tagger 从lattice中移除。 |
+| `enableStandaloneNumber` | `true` | `false` → 纯cardinal表达式保留中文（`两万` → `两万`）。带单位的数字依然转换（`一千克` → `1000 g`）。Cardinal tagger 从lattice中移除。 |
 | `enable0To9` | `false` | `true` → 单字数字standalone转阿拉伯（`一` → `1`，`零` → `0`）。默认保留中文，避免`一个 / 一会`等误转。 |
 | `enableMillion` | `false` | `true` → 千/百 + 万 完全展开（`两千五百万` → `25000000`），不保留`万`作为readability标记。`亿`始终保留为文本标记。 |
 | `removeInterjections` | `true` | `false` → 保留`呃` / `啊`等filler。默认删除（按WeText `data/default/blacklist.tsv`）。 |
 | `enableSpecialTilde` | `false` | `true` → 口语近似范围emit波浪号形态（`一二` → `1~2`，`三五百` → `300~500`，`三四万` → `3~4万`）。默认保留纯数字对的中文形态，让下游LLM自己决定区间表达。WeText库默认为True，本库默认False。 |
-| `enableTimeEnglishMapping` | `false` | `true` → 时段词转a.m./p.m.（`早上十点半` → `10:30a.m.`），时间单位转英文缩写（`二十分钟` → `20min`，`两个小时` → `2h`，`一百毫秒` → `100ms`）。默认两者都保留中文（`早上10:30`，`20分钟`）。其他单位（`千克`→kg、`公里`→km）不受影响。WeText库默认为True，本库默认False。 |
+| `enableTimeEnglishMapping` | `false` | `true` → 时段词转a.m./p.m.（`早上十点半` → `10:30 a.m.`），时间单位转英文缩写（`二十分钟` → `20 min`，`两个小时` → `2 h`，`一百毫秒` → `100 ms`）。默认两者都保留中文（`早上10:30`，`20分钟`）。其他单位（`千克`→kg、`公里`→km）不受影响。按 SI / NIST SP 811 / ISO 80000-1，数字和英文单位之间留一个空格（裸 `°` 例外，例 `30°`）；WeText 不留空格。WeText库默认为True，本库默认False。 |
 
 三个preset：
 - `ChineseITNConfig.default` —— 推荐用于真实ASR后处理（下游有LLM处理范围/估数解读）。仅在`enableSpecialTilde`上与WeText库默认值不同（本库False，上游True）。
@@ -294,7 +294,7 @@ chinese-itn --official-test               # 用weTextOfficialTest preset
 | Time            | X点Y分 → HH:MM，X点Y分Z秒 → HH:MM:SS，X点半 → HH:30，上下午前缀（上午/早上/早晨 → a.m.，下午/晚上/傍晚 → p.m.） |
 | Money           | 元 / 美元 / 欧元 / 英镑 / 港元 / 日元等 → 符号或代码前缀（¥ $ € £ HKD JPY ...） |
 | Fraction        | X分之Y → Y/X（分子分母可多字符）；百分(之)?X → X%；百分百 → 100%；百分之X点Y → X.Y%；百分之X到Y → X~Y% |
-| Measure         | 数字 + 单位 → 国际单位缩写（千克 → kg，公里 → km，平方米 → m²，摄氏度 → °C，毫秒 → ms，共约85条映射）；两遍扫描优先匹配多字符单位（二十五千克 → 25kg，不是25000g） |
+| Measure         | 数字 + 单位 → 国际单位缩写（千克 → kg，公里 → km，平方米 → m²，摄氏度 → °C，毫秒 → ms，共约85条映射），按 SI / NIST SP 811 / ISO 80000-1 在数字和英文单位之间留一个空格（裸 `°` 例外）；两遍扫描优先匹配多字符单位（二十五千克 → 25 kg，不是25000 g） |
 | Math            | 加 / 减 / 乘 / 除 / 比 / 到 / 等于 → + − × ÷ : ~ =，支持链式"负"号 |
 | LicensePlate    | 京A幺二三四五 → 京A12345（31个省份字符 + 字母 + 5–6字符车号） |
 | Electronic      | 空格分隔URL "w w w 点 X 点 Y" → www.X.Y                       |

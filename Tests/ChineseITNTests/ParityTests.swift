@@ -9,7 +9,20 @@ struct Fixture: Decodable {
     let category: String
     let source: String
     let input: String
+    /// Reference output from WeTextProcessing — kept verbatim as
+    /// documentation of upstream behavior.
     let expected: String
+    /// Override used when the Swift port deliberately diverges from
+    /// WeText (e.g. SI/NIST-compliant spacing between value and unit).
+    /// Tests should check against this when present, else `expected`.
+    let expectedSwift: String?
+
+    var target: String { expectedSwift ?? expected }
+
+    enum CodingKeys: String, CodingKey {
+        case category, source, input, expected
+        case expectedSwift = "expected_swift"
+    }
 }
 
 final class ParityTests: XCTestCase {
@@ -39,7 +52,7 @@ final class ParityTests: XCTestCase {
         var fail: [(Fixture, String)] = []
         for fx in Self.fixtures {
             let actual = ChineseITN.normalize(fx.input, config: .weTextLibraryDefault)
-            if actual == fx.expected {
+            if actual == fx.target {
                 pass += 1
             } else {
                 fail.append((fx, actual))
@@ -51,7 +64,7 @@ final class ParityTests: XCTestCase {
             print("\nFailures:")
             for (fx, actual) in fail {
                 print("  [\(fx.category)] \(fx.input.debugDescription)")
-                print("    expected: \(fx.expected.debugDescription)")
+                print("    expected: \(fx.target.debugDescription)")
                 print("    actual:   \(actual.debugDescription)")
             }
         }
@@ -80,7 +93,7 @@ final class ParityTests: XCTestCase {
         var failures: [(Fixture, String)] = []
         for fx in cases {
             let actual = ChineseITN.normalize(fx.input, config: .weTextLibraryDefault)
-            if actual != fx.expected {
+            if actual != fx.target {
                 failures.append((fx, actual))
             }
         }
@@ -88,7 +101,7 @@ final class ParityTests: XCTestCase {
             var msg = "\(failures.count)/\(cases.count) \(name) cases failing:\n"
             for (fx, actual) in failures {
                 msg += "  [\(name)] \(fx.input.debugDescription)\n"
-                msg += "    expected: \(fx.expected.debugDescription)\n"
+                msg += "    expected: \(fx.target.debugDescription)\n"
                 msg += "    actual:   \(actual.debugDescription)\n"
             }
             XCTFail(msg)

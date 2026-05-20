@@ -5,15 +5,17 @@
 //
 // Recognition logic lives in Taggers.swift (`Measure.tag`).
 //
-// Examples:
-//   一千克            → 1kg
-//   重达二十五千克     → 重达25kg
-//   三百二十四点七五克 → 324.75g
-//   最高气温三十八摄氏度 → 最高气温38°C
-//   实际面积一百二十平方米 → 实际面积120m²
-//   每小时十千米       → 10km/h
-//   十一到一百千米每小时 → 11~100km/h
-//   三百九十九三盒     → 3993盒  (unit_sp_case1)
+// Examples (space between value and English unit symbol per SI /
+// NIST SP 811 / ISO 80000-1; bare ° excepted, Chinese-kept units like
+// 盒/个 stay glued per Chinese style):
+//   一千克            → 1 kg
+//   重达二十五千克     → 重达25 kg
+//   三百二十四点七五克 → 324.75 g
+//   最高气温三十八摄氏度 → 最高气温38 °C
+//   实际面积一百二十平方米 → 实际面积120 m²
+//   每小时十千米       → 10 km/h
+//   十一到一百千米每小时 → 11~100 km/h
+//   三百九十九三盒     → 3993盒  (unit_sp_case1, Chinese-kept)
 
 import Foundation
 
@@ -155,6 +157,20 @@ enum Measure {
         if let en = unitMap[cn] { return en }
         if unitChineseKept.contains(cn) { return cn }
         return nil
+    }
+
+    /// Separator inserted between numerical value and unit symbol.
+    /// Per SI Brochure §5.4.3, NIST SP 811 §7.2, and ISO 80000-1:
+    /// a space always separates value and unit symbol. Exceptions:
+    ///   - bare ° (plane angle): "30°", no space
+    ///   - Chinese-kept units (个/张/...): no space (Chinese style)
+    /// °C / °F still take a space ("25 °C") per SI.
+    static func unitSep(_ unitOut: String) -> String {
+        if unitOut == "°" { return "" }
+        guard let first = unitOut.unicodeScalars.first else { return "" }
+        // CJK Unified Ideographs: Chinese-kept units stay glued.
+        if first.value >= 0x4E00 && first.value <= 0x9FFF { return "" }
+        return " "
     }
 
     static let allUnits: [String] = Array(unitMap.keys) + unitChineseKept

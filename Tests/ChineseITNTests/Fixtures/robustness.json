@@ -567,7 +567,8 @@
     "category": "tp_time_basic",
     "source": "WeText",
     "input": "上午八点半",
-    "expected": "8:30a.m."
+    "expected": "8:30a.m.",
+    "expected_swift": "8:30 a.m."
   },
   {
     "category": "tp_time_basic",
@@ -591,7 +592,8 @@
     "category": "tp_time_basic",
     "source": "WeText",
     "input": "傍晚六点半",
-    "expected": "6:30p.m."
+    "expected": "6:30p.m.",
+    "expected_swift": "6:30 p.m."
   },
   {
     "category": "tp_time_basic",
@@ -615,25 +617,29 @@
     "category": "tp_time_minute_second",
     "source": "WeText",
     "input": "上午一点零二分三十六秒",
-    "expected": "1:02:36a.m."
+    "expected": "1:02:36a.m.",
+    "expected_swift": "1:02:36 a.m."
   },
   {
     "category": "tp_time_minute_second",
     "source": "WeText",
     "input": "早上一点零二",
-    "expected": "1:02a.m."
+    "expected": "1:02a.m.",
+    "expected_swift": "1:02 a.m."
   },
   {
     "category": "tp_time_minute_second",
     "source": "WeText",
     "input": "早上一点零二分",
-    "expected": "1:02a.m."
+    "expected": "1:02a.m.",
+    "expected_swift": "1:02 a.m."
   },
   {
     "category": "tp_time_minute_second",
     "source": "WeText",
     "input": "晚上一点零二分",
-    "expected": "1:02p.m."
+    "expected": "1:02p.m.",
+    "expected_swift": "1:02 p.m."
   },
   {
     "category": "tp_time_minute_second",
@@ -645,19 +651,22 @@
     "category": "tp_time_minute_second",
     "source": "WeText",
     "input": "下午八点零五分",
-    "expected": "8:05p.m."
+    "expected": "8:05p.m.",
+    "expected_swift": "8:05 p.m."
   },
   {
     "category": "tp_time_minute_second",
     "source": "WeText",
     "input": "上午十点零五分",
-    "expected": "10:05a.m."
+    "expected": "10:05a.m.",
+    "expected_swift": "10:05 a.m."
   },
   {
     "category": "tp_time_minute_second",
     "source": "WeText",
     "input": "晚上十一点二十分",
-    "expected": "11:20p.m."
+    "expected": "11:20p.m.",
+    "expected_swift": "11:20 p.m."
   },
   {
     "category": "tp_money_basic",
@@ -765,25 +774,29 @@
     "category": "tp_measure_basic",
     "source": "WeText",
     "input": "重达二十五千克",
-    "expected": "重达25kg"
+    "expected": "重达25kg",
+    "expected_swift": "重达25 kg"
   },
   {
     "category": "tp_measure_basic",
     "source": "WeText",
     "input": "最高气温三十八摄氏度",
-    "expected": "最高气温38°C"
+    "expected": "最高气温38°C",
+    "expected_swift": "最高气温38 °C"
   },
   {
     "category": "tp_measure_basic",
     "source": "WeText",
     "input": "实际面积一百二十平方米",
-    "expected": "实际面积120m²"
+    "expected": "实际面积120m²",
+    "expected_swift": "实际面积120 m²"
   },
   {
     "category": "tp_measure_basic",
     "source": "WeText",
     "input": "渲染速度十毫秒一帧",
-    "expected": "渲染速度10ms一帧"
+    "expected": "渲染速度10ms一帧",
+    "expected_swift": "渲染速度10 ms一帧"
   },
   {
     "category": "tp_measure_basic",
@@ -831,25 +844,29 @@
     "category": "tp_measure_range",
     "source": "WeText",
     "input": "七八公斤",
-    "expected": "7~8kg"
+    "expected": "7~8kg",
+    "expected_swift": "7~8 kg"
   },
   {
     "category": "tp_measure_range",
     "source": "WeText",
     "input": "五六十摩尔",
-    "expected": "50~60mol"
+    "expected": "50~60mol",
+    "expected_swift": "50~60 mol"
   },
   {
     "category": "tp_measure_range",
     "source": "WeText",
     "input": "三五百公里",
-    "expected": "300~500km"
+    "expected": "300~500km",
+    "expected_swift": "300~500 km"
   },
   {
     "category": "tp_measure_range",
     "source": "WeText",
     "input": "三四万伏特",
-    "expected": "3~4Wv"
+    "expected": "3~4Wv",
+    "expected_swift": "3~4 Wv"
   },
   {
     "category": "tp_measure_range",

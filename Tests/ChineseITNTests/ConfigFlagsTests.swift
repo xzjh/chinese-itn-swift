@@ -96,13 +96,14 @@ final class ConfigFlagsTests: XCTestCase {
     func testDisableStandaloneNumberDoesNotBreakUnitBoundCases() {
         var cfg = ChineseITNConfig.default
         cfg.enableStandaloneNumber = false
-        // Note: under enable_0_to_9=false (default), "一千克" → "1000g"
-        // (Cardinal "一千"=1000 + 克=g), not "1kg" (which would require
+        // Note: under enable_0_to_9=false (default), "一千克" → "1000 g"
+        // (Cardinal "一千"=1000 + 克=g), not "1 kg" (which would require
         // single digit "一"=1 + 千克=kg). WeText reference confirmed.
-        XCTAssertEqual(ChineseITN.normalize("一千克", config: cfg), "1000g")
+        // Space between value and unit per SI / NIST SP 811 / ISO 80000-1.
+        XCTAssertEqual(ChineseITN.normalize("一千克", config: cfg), "1000 g")
         XCTAssertEqual(ChineseITN.normalize("两百欧元", config: cfg), "€200")
         XCTAssertEqual(ChineseITN.normalize("百分之三十", config: cfg), "30%")
-        XCTAssertEqual(ChineseITN.normalize("重达二十五千克", config: cfg), "重达25kg")
+        XCTAssertEqual(ChineseITN.normalize("重达二十五千克", config: cfg), "重达25 kg")
     }
 
     /// FP: disable_standalone_number does not affect decimal +
@@ -238,21 +239,22 @@ final class ConfigFlagsTests: XCTestCase {
     func testDefaultKeepsTimeUnitsChinese() {
         XCTAssertEqual(ChineseITN.normalize("等二十分钟"), "等20分钟")
         XCTAssertEqual(ChineseITN.normalize("两个小时"), "两个小时")  // 个 不是unit, 两 单digit
-        XCTAssertEqual(ChineseITN.normalize("跑十公里"), "跑10km")
-        XCTAssertEqual(ChineseITN.normalize("重二十千克"), "重20kg")
+        XCTAssertEqual(ChineseITN.normalize("跑十公里"), "跑10 km")
+        XCTAssertEqual(ChineseITN.normalize("重二十千克"), "重20 kg")
         XCTAssertEqual(ChineseITN.normalize("延迟一百毫秒"), "延迟100毫秒")
         XCTAssertEqual(ChineseITN.normalize("十二个小时"), "12个小时")
     }
 
     /// TP: enable_time_english_mapping=true converts noon prefix and
     /// time units to English short forms (WeText library behavior).
+    /// Space between value and unit / time and a.m.,p.m. per SI / NIST SP 811.
     func testEnableTimeEnglishMappingConverts() {
         var cfg = ChineseITNConfig.default
         cfg.enableTimeEnglishMapping = true
-        XCTAssertEqual(ChineseITN.normalize("早上十点半", config: cfg), "10:30a.m.")
-        XCTAssertEqual(ChineseITN.normalize("下午三点四十五分", config: cfg), "3:45p.m.")
-        XCTAssertEqual(ChineseITN.normalize("等二十分钟", config: cfg), "等20min")
-        XCTAssertEqual(ChineseITN.normalize("延迟一百毫秒", config: cfg), "延迟100ms")
+        XCTAssertEqual(ChineseITN.normalize("早上十点半", config: cfg), "10:30 a.m.")
+        XCTAssertEqual(ChineseITN.normalize("下午三点四十五分", config: cfg), "3:45 p.m.")
+        XCTAssertEqual(ChineseITN.normalize("等二十分钟", config: cfg), "等20 min")
+        XCTAssertEqual(ChineseITN.normalize("延迟一百毫秒", config: cfg), "延迟100 ms")
     }
 
     /// FP: time mapping flag does NOT affect other measure units or
@@ -260,8 +262,8 @@ final class ConfigFlagsTests: XCTestCase {
     func testTimeMappingFlagDoesNotAffectOtherUnits() {
         var cfg = ChineseITNConfig.default
         cfg.enableTimeEnglishMapping = false
-        XCTAssertEqual(ChineseITN.normalize("跑十公里", config: cfg), "跑10km")
-        XCTAssertEqual(ChineseITN.normalize("重二十千克", config: cfg), "重20kg")
+        XCTAssertEqual(ChineseITN.normalize("跑十公里", config: cfg), "跑10 km")
+        XCTAssertEqual(ChineseITN.normalize("重二十千克", config: cfg), "重20 kg")
         XCTAssertEqual(ChineseITN.normalize("三点一四", config: cfg), "3.14")
     }
 
