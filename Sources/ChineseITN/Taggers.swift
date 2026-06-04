@@ -40,20 +40,50 @@ extension DateNormalize {
                 // Try year + month + day
                 if let (monthEnd, mInt) = matchMonth(chars: chars,
                                                     start: yearEnd + 1) {
-                    if let (dayEnd, dInt) = matchDay(chars: chars, start: monthEnd) {
+                    if let (dayEnd, dInt, daySuffix) = matchDay(chars: chars, start: monthEnd) {
+                        let dateOutput = formattedDate(
+                            year: yArabic,
+                            month: mInt,
+                            day: dInt,
+                            daySuffix: daySuffix,
+                            original: String(chars[i..<dayEnd]),
+                            config: config
+                        )
                         out.append(Candidate(
                             startIdx: i,
                             endIdx: dayEnd,
-                            output: String(format: "%@/%02d/%02d", yArabic, mInt, dInt),
+                            output: dateOutput,
                             weight: TaggerWeight.date,
                             source: "date"
                         ))
+                        if let time = TimeNormalize.matchAt(chars: chars,
+                                                            start: dayEnd,
+                                                            config: config) {
+                            out.append(Candidate(
+                                startIdx: i,
+                                endIdx: time.endIdx,
+                                output: joinDateTime(
+                                    dateOutput,
+                                    time.output,
+                                    config: config
+                                ),
+                                weight: TaggerWeight.date + TaggerWeight.time - 0.001,
+                                source: "date_time"
+                            ))
+                        }
                     }
                     // Year + month
                     out.append(Candidate(
                         startIdx: i,
                         endIdx: monthEnd,
-                        output: String(format: "%@/%02d", yArabic, mInt),
+                        output: formattedDate(
+                            year: yArabic,
+                            month: mInt,
+                            day: nil,
+                            daySuffix: nil,
+                            original: String(chars[i..<monthEnd]),
+                            config: config
+                        ),
                         weight: TaggerWeight.date,
                         source: "date"
                     ))
@@ -67,7 +97,11 @@ extension DateNormalize {
                     out.append(Candidate(
                         startIdx: i,
                         endIdx: yearEnd + 1,
-                        output: "\(yArabic)年",
+                        output: formattedYear(
+                            yArabic,
+                            original: String(chars[i..<(yearEnd + 1)]),
+                            config: config
+                        ),
                         weight: TaggerWeight.date,
                         source: "date_year_only"
                     ))
@@ -76,18 +110,97 @@ extension DateNormalize {
 
             // Month + day standalone (no year prefix)
             if let (monthEnd, mInt) = matchMonth(chars: chars, start: i) {
-                if let (dayEnd, dInt) = matchDay(chars: chars, start: monthEnd) {
+                if let (dayEnd, dInt, daySuffix) = matchDay(chars: chars, start: monthEnd) {
+                    let dateOutput = formattedDate(
+                        year: nil,
+                        month: mInt,
+                        day: dInt,
+                        daySuffix: daySuffix,
+                        original: String(chars[i..<dayEnd]),
+                        config: config
+                    )
                     out.append(Candidate(
                         startIdx: i,
                         endIdx: dayEnd,
-                        output: String(format: "%02d/%02d", mInt, dInt),
+                        output: dateOutput,
                         weight: TaggerWeight.date,
                         source: "date_md"
                     ))
+                    if let time = TimeNormalize.matchAt(chars: chars,
+                                                        start: dayEnd,
+                                                        config: config) {
+                        out.append(Candidate(
+                            startIdx: i,
+                            endIdx: time.endIdx,
+                            output: joinDateTime(
+                                dateOutput,
+                                time.output,
+                                config: config
+                            ),
+                            weight: TaggerWeight.date + TaggerWeight.time - 0.001,
+                            source: "date_time"
+                        ))
+                    }
                 }
             }
         }
         return out
+    }
+
+    private static func formattedDate(year: String?,
+                                      month: Int,
+                                      day: Int?,
+                                      daySuffix: Character?,
+                                      original: String,
+                                      config: ChineseITNConfig) -> String {
+        switch config.temporalOutputStyle {
+        case .compactNumeric:
+            if let year, let day {
+                return String(format: "%@/%02d/%02d", year, month, day)
+            }
+            if let year {
+                return String(format: "%@/%02d", year, month)
+            }
+            if let day {
+                return String(format: "%02d/%02d", month, day)
+            }
+            return original
+        case .chineseNumeric:
+            if let year, let day {
+                return "\(year)年\(month)月\(day)\(daySuffix ?? "日")"
+            }
+            if let year {
+                return "\(year)年\(month)月"
+            }
+            if let day {
+                return "\(month)月\(day)\(daySuffix ?? "日")"
+            }
+            return original
+        case .spokenChinese:
+            return original
+        }
+    }
+
+    private static func formattedYear(_ year: String,
+                                      original: String,
+                                      config: ChineseITNConfig) -> String {
+        switch config.temporalOutputStyle {
+        case .compactNumeric, .chineseNumeric:
+            return "\(year)年"
+        case .spokenChinese:
+            return original
+        }
+    }
+
+    private static func joinDateTime(_ date: String,
+                                     _ time: String,
+                                     config: ChineseITNConfig) -> String {
+        switch config.temporalOutputStyle {
+        case .compactNumeric, .chineseNumeric:
+            return "\(date) \(time)"
+        case .spokenChinese:
+            return "\(date)\(time)"
+        }
     }
 
     /// Match a "X月" span starting at `start`. Returns (end-idx-after-月, month-int).
@@ -104,7 +217,7 @@ extension DateNormalize {
     }
 
     /// Match a "X(日|号|號)" span starting at `start`.
-    private static func matchDay(chars: [Character], start: Int) -> (Int, Int)? {
+    private static func matchDay(chars: [Character], start: Int) -> (Int, Int, Character)? {
         let n = chars.count
         let cnCardSet = Set(cnCardinalClass)
         var k = start
@@ -115,7 +228,7 @@ extension DateNormalize {
         let dStr = String(chars[start..<k])
         guard let dInt = Cardinal.parseToInt(dStr), (1...31).contains(dInt)
         else { return nil }
-        return (k + 1, dInt)
+        return (k + 1, dInt, chars[k])
     }
 }
 
@@ -1225,95 +1338,125 @@ extension TimeNormalize {
     static func tag(_ chars: [Character],
                     config: ChineseITNConfig) -> [Candidate] {
         var out: [Candidate] = []
-        let n = chars.count
-        let s = String(chars)
-
-        // Iterate each starting position
-        for i in 0..<n {
-            // Optional noon prefix (gated: when enableTimeEnglishMapping
-            // is False, leave the prefix to char fallback so the time
-            // converts but the noon word stays Chinese — "早上十点半" →
-            // "早上10:30" instead of "10:30a.m.").
-            var noonLen = 0
-            var noonOut = ""
-            if config.enableTimeEnglishMapping {
-                for noonKey in noonMapKeys {
-                    if i + noonKey.count <= n {
-                        let candidate = String(chars[i..<(i + noonKey.count)])
-                        if candidate == noonKey {
-                            noonLen = noonKey.count
-                            noonOut = noonMapLocal[noonKey] ?? ""
-                            break
-                        }
-                    }
-                }
-            }
-            let hourStart = i + noonLen
-
-            // Hour: try longest first
-            var hourMatch: (key: String, len: Int)?
-            for hourKey in hourMapKeys {
-                if hourStart + hourKey.count <= n {
-                    let candidate = String(chars[hourStart..<(hourStart + hourKey.count)])
-                    if candidate == hourKey {
-                        hourMatch = (hourKey, hourKey.count)
-                        break
-                    }
-                }
-            }
-            guard let hourM = hourMatch else { continue }
-            let minuteStart = hourStart + hourM.len
-
-            // Minute: try longest first
-            var minuteMatch: (key: String, len: Int)?
-            for minuteKey in minuteMapKeys {
-                if minuteStart + minuteKey.count <= n {
-                    let candidate = String(chars[minuteStart..<(minuteStart + minuteKey.count)])
-                    if candidate == minuteKey {
-                        minuteMatch = (minuteKey, minuteKey.count)
-                        break
-                    }
-                }
-            }
-            guard let minuteM = minuteMatch else { continue }
-            var endIdx = minuteStart + minuteM.len
-
-            // Optional 分
-            if endIdx < n && chars[endIdx] == "分" {
-                endIdx += 1
-            }
-
-            // Optional second
-            var secondOut = ""
-            for secondKey in secondMapKeys {
-                if endIdx + secondKey.count <= n {
-                    let candidate = String(chars[endIdx..<(endIdx + secondKey.count)])
-                    if candidate == secondKey {
-                        secondOut = secondMap[secondKey] ?? ""
-                        endIdx += secondKey.count
-                        break
-                    }
-                }
-            }
-
-            guard let hOut = hourMap[hourM.key],
-                  let mOut = minuteMap[minuteM.key] else { continue }
-            var output = "\(hOut):\(mOut)"
-            if !secondOut.isEmpty { output += ":\(secondOut)" }
-            // NIST SP 811 §10.3: a.m./p.m. is separated from the time
-            // by a space ("3:45 p.m.").
-            if !noonOut.isEmpty { output += " \(noonOut)" }
-
+        for i in 0..<chars.count {
+            guard let match = matchAt(chars: chars, start: i, config: config)
+            else { continue }
             out.append(Candidate(
                 startIdx: i,
-                endIdx: endIdx,
-                output: output,
+                endIdx: match.endIdx,
+                output: match.output,
                 weight: TaggerWeight.time,
                 source: "time"
             ))
-            _ = s  // silence unused warning if any
         }
         return out
+    }
+
+    static func matchAt(chars: [Character],
+                        start: Int,
+                        config: ChineseITNConfig) -> (endIdx: Int, output: String)? {
+        let n = chars.count
+        guard start < n else { return nil }
+
+        var noonLen = 0
+        var noonOriginal = ""
+        var noonOut = ""
+        for noonKey in noonMapKeys {
+            if start + noonKey.count <= n {
+                let candidate = String(chars[start..<(start + noonKey.count)])
+                if candidate == noonKey {
+                    noonLen = noonKey.count
+                    noonOriginal = candidate
+                    noonOut = noonMapLocal[noonKey] ?? ""
+                    break
+                }
+            }
+        }
+        let hourStart = start + noonLen
+
+        var hourMatch: (key: String, len: Int)?
+        for hourKey in hourMapKeys {
+            if hourStart + hourKey.count <= n {
+                let candidate = String(chars[hourStart..<(hourStart + hourKey.count)])
+                if candidate == hourKey {
+                    hourMatch = (hourKey, hourKey.count)
+                    break
+                }
+            }
+        }
+        guard let hourM = hourMatch else { return nil }
+        let minuteStart = hourStart + hourM.len
+
+        var minuteMatch: (key: String, len: Int)?
+        for minuteKey in minuteMapKeys {
+            if minuteStart + minuteKey.count <= n {
+                let candidate = String(chars[minuteStart..<(minuteStart + minuteKey.count)])
+                if candidate == minuteKey {
+                    minuteMatch = (minuteKey, minuteKey.count)
+                    break
+                }
+            }
+        }
+        guard let minuteM = minuteMatch else { return nil }
+        var endIdx = minuteStart + minuteM.len
+
+        if endIdx < n && chars[endIdx] == "分" {
+            endIdx += 1
+        }
+
+        var secondOut = ""
+        for secondKey in secondMapKeys {
+            if endIdx + secondKey.count <= n {
+                let candidate = String(chars[endIdx..<(endIdx + secondKey.count)])
+                if candidate == secondKey {
+                    secondOut = secondMap[secondKey] ?? ""
+                    endIdx += secondKey.count
+                    break
+                }
+            }
+        }
+
+        guard let hOut = hourMap[hourM.key],
+              let mOut = minuteMap[minuteM.key] else { return nil }
+        let original = String(chars[start..<endIdx])
+        let output = formattedTime(
+            hour: hOut,
+            minute: mOut,
+            second: secondOut.isEmpty ? nil : secondOut,
+            noonOriginal: noonOriginal,
+            noonEnglish: noonOut,
+            original: original,
+            config: config
+        )
+        return (endIdx, output)
+    }
+
+    private static func formattedTime(hour: String,
+                                      minute: String,
+                                      second: String?,
+                                      noonOriginal: String,
+                                      noonEnglish: String,
+                                      original: String,
+                                      config: ChineseITNConfig) -> String {
+        switch config.temporalOutputStyle {
+        case .compactNumeric:
+            var output = "\(hour):\(minute)"
+            if let second { output += ":\(second)" }
+            if config.enableTimeEnglishMapping, !noonEnglish.isEmpty {
+                // NIST SP 811 §10.3: a.m./p.m. is separated from the
+                // time by a space ("3:45 p.m.").
+                output += " \(noonEnglish)"
+            } else {
+                output = noonOriginal + output
+            }
+            return output
+        case .chineseNumeric:
+            var output = "\(noonOriginal)\(hour)点\(minute)分"
+            if let second { output += "\(second)秒" }
+            return output
+        case .spokenChinese:
+            return original
+        }
     }
 
     static let hourMapKeys: [String] = hourMap.keys.sorted { $0.count > $1.count }
@@ -1617,4 +1760,3 @@ extension Decimal {
         return Cardinal.parse(s, enableMillion: config.enableMillion)
     }
 }
-

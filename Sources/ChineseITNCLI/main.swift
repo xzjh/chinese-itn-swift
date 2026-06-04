@@ -11,6 +11,9 @@
 //                           (our library default; WeText defaults this on).
 //   --enable-time-english   Map noon prefix (早上→a.m.) and time units
 //                           (分钟→min, 小时→h). Default off (kept Chinese).
+//   --temporal-style STYLE   Date/time output style:
+//                           compact, chinese-numeric, spoken-chinese.
+//                           Default compact preserves legacy output.
 //   --library-default       Preset matching WeText InverseNormalizer() no-arg
 //                           constructor. Implies --enable-special-tilde.
 //   --official-test         Preset matching WeTextProcessing's official
@@ -33,7 +36,9 @@ import ChineseITN
 func parseArgs() -> ChineseITNConfig {
     var cfg = ChineseITNConfig.default
     let args = Array(CommandLine.arguments.dropFirst())
-    for a in args {
+    var i = 0
+    while i < args.count {
+        let a = args[i]
         switch a {
         case "--enable-0-to-9":
             cfg.enable0To9 = true
@@ -51,6 +56,16 @@ func parseArgs() -> ChineseITNConfig {
             cfg.enableMillion = true
         case "--disable-standalone-number":
             cfg.enableStandaloneNumber = false
+        case "--temporal-style":
+            guard i + 1 < args.count,
+                  let style = parseTemporalStyle(args[i + 1]) else {
+                FileHandle.standardError.write(
+                    Data("chinese-itn: --temporal-style expects compact, chinese-numeric, or spoken-chinese\n".utf8)
+                )
+                exit(2)
+            }
+            cfg.temporalOutputStyle = style
+            i += 1
         case "--help", "-h":
             print("""
             chinese-itn — Chinese Inverse Text Normalization CLI
@@ -70,6 +85,8 @@ func parseArgs() -> ChineseITNConfig {
               --enable-million           千/百+万 fully arabize (vs keep 万 suffix)
               --disable-standalone-number  don't convert bare cardinal expressions
                                          (only convert when bound to unit/currency/etc)
+              --temporal-style STYLE      date/time style: compact,
+                                         chinese-numeric, spoken-chinese
               -h, --help                 show this help
             """)
             exit(0)
@@ -79,8 +96,22 @@ func parseArgs() -> ChineseITNConfig {
             )
             exit(2)
         }
+        i += 1
     }
     return cfg
+}
+
+private func parseTemporalStyle(_ raw: String) -> ChineseITNTemporalOutputStyle? {
+    switch raw {
+    case "compact", "compact-numeric", "compactNumeric":
+        return .compactNumeric
+    case "chinese-numeric", "chineseNumeric":
+        return .chineseNumeric
+    case "spoken-chinese", "spokenChinese":
+        return .spokenChinese
+    default:
+        return nil
+    }
 }
 
 let config = parseArgs()

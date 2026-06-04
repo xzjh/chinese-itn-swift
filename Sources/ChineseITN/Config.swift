@@ -31,8 +31,22 @@
 //       leaving range / approximate-quantifier interpretation to a
 //       downstream LLM. WeText library default: True. Our library
 //       default: False.
+//   temporal_output_style: controls date and clock-time surface forms.
+//       Compact preserves the legacy slash/colon shape
+//       ("五月十号" → "05/10", "五点三十一分" → "5:31").
+//       Chinese numeric keeps Chinese date/time units but arabizes the
+//       numbers while preserving the spoken day suffix
+//       ("五月十号" → "5月10号", "五月十日" → "5月10日",
+//       "五点三十一分" → "5点31分").
+//       Spoken Chinese preserves matched date/time spans verbatim.
 
 import Foundation
+
+public enum ChineseITNTemporalOutputStyle: String, Sendable, CaseIterable {
+    case compactNumeric
+    case chineseNumeric
+    case spokenChinese
+}
 
 public struct ChineseITNConfig: Sendable {
 
@@ -42,6 +56,7 @@ public struct ChineseITNConfig: Sendable {
     public var removeInterjections: Bool
     public var enableSpecialTilde: Bool
     public var enableTimeEnglishMapping: Bool
+    public var temporalOutputStyle: ChineseITNTemporalOutputStyle
 
     public init(
         enableStandaloneNumber: Bool = true,
@@ -49,7 +64,8 @@ public struct ChineseITNConfig: Sendable {
         enableMillion: Bool = false,
         removeInterjections: Bool = true,
         enableSpecialTilde: Bool = false,
-        enableTimeEnglishMapping: Bool = false
+        enableTimeEnglishMapping: Bool = false,
+        temporalOutputStyle: ChineseITNTemporalOutputStyle = .compactNumeric
     ) {
         self.enableStandaloneNumber = enableStandaloneNumber
         self.enable0To9 = enable0To9
@@ -57,6 +73,7 @@ public struct ChineseITNConfig: Sendable {
         self.removeInterjections = removeInterjections
         self.enableSpecialTilde = enableSpecialTilde
         self.enableTimeEnglishMapping = enableTimeEnglishMapping
+        self.temporalOutputStyle = temporalOutputStyle
     }
 
     /// Library default. Diverges from WeText library defaults on

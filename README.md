@@ -85,6 +85,7 @@ from WeText library default (False here vs True upstream).
 | `removeInterjections` | `true` | `false` → `呃` / `啊` fillers stay in the output. Default removes them per WeText `data/default/blacklist.tsv`. |
 | `enableSpecialTilde` | `false` | `true` → spoken approximate ranges emit tilde forms (`一二` → `1~2`, `三五百` → `300~500`, `三四万` → `3~4万`). Default keeps the pure-digit pair forms Chinese so a downstream LLM can decide. WeText library defaults this to True; we default to False. |
 | `enableTimeEnglishMapping` | `false` | `true` → noon-prefix words map to a.m./p.m. (`早上十点半` → `10:30 a.m.`) and time units map to English abbreviations (`二十分钟` → `20 min`, `两个小时` → `2 h`, `一百毫秒` → `100 ms`). Default keeps both Chinese (`早上10:30`, `20分钟`). Other unit mappings (`千克`→kg, `公里`→km) are unaffected. A space separates value and English unit symbol per SI / NIST SP 811 / ISO 80000-1 (exception: bare `°` stays glued, e.g. `30°`); WeText emits no space. WeText library defaults this to True; we default to False. |
+| `temporalOutputStyle` | `.compactNumeric` | Controls date and clock-time surface format. `.compactNumeric` keeps the legacy slash/colon format (`五月十号` → `05/10`, `五点三十一分` → `5:31`). `.chineseNumeric` keeps Chinese units with Arabic digits and preserves the spoken day suffix (`五月十号` → `5月10号`, `五月十日` → `5月10日`, `五点三十一分` → `5点31分`). `.spokenChinese` preserves matched date/time spans verbatim. Duration units are not affected (`二十分钟` still → `20分钟`). |
 
 Three presets:
 - `ChineseITNConfig.default` — recommended for real ASR post-processing where a downstream LLM handles range / approximate-quantifier interpretation. Diverges from WeText library defaults only on `enableSpecialTilde` (False here vs True upstream).
@@ -96,6 +97,10 @@ var cfg = ChineseITNConfig.default
 cfg.enableMillion = true
 ChineseITN.normalize("两千五百万美元", config: cfg)
 // "$25000000"
+
+cfg.temporalOutputStyle = .chineseNumeric
+ChineseITN.normalize("五月十号五点三十一分", config: cfg)
+// "5月10号 5点31分"
 ```
 
 CLI equivalents (in the `chinese-itn` executable):
@@ -106,6 +111,7 @@ chinese-itn --enable-special-tilde        # enableSpecialTilde = true
 chinese-itn --enable-time-english         # enableTimeEnglishMapping = true
 chinese-itn --enable-million              # enableMillion = true
 chinese-itn --disable-standalone-number   # enableStandaloneNumber = false
+chinese-itn --temporal-style chinese-numeric
 chinese-itn --no-interjections            # removeInterjections = false
 chinese-itn --library-default             # use the weTextLibraryDefault preset
 chinese-itn --official-test               # use the weTextOfficialTest preset
@@ -258,6 +264,7 @@ let out = ChineseITN.normalize("内存占用四点零八个G")
 | `removeInterjections` | `true` | `false` → 保留`呃` / `啊`等filler。默认删除（按WeText `data/default/blacklist.tsv`）。 |
 | `enableSpecialTilde` | `false` | `true` → 口语近似范围emit波浪号形态（`一二` → `1~2`，`三五百` → `300~500`，`三四万` → `3~4万`）。默认保留纯数字对的中文形态，让下游LLM自己决定区间表达。WeText库默认为True，本库默认False。 |
 | `enableTimeEnglishMapping` | `false` | `true` → 时段词转a.m./p.m.（`早上十点半` → `10:30 a.m.`），时间单位转英文缩写（`二十分钟` → `20 min`，`两个小时` → `2 h`，`一百毫秒` → `100 ms`）。默认两者都保留中文（`早上10:30`，`20分钟`）。其他单位（`千克`→kg、`公里`→km）不受影响。按 SI / NIST SP 811 / ISO 80000-1，数字和英文单位之间留一个空格（裸 `°` 例外，例 `30°`）；WeText 不留空格。WeText库默认为True，本库默认False。 |
+| `temporalOutputStyle` | `.compactNumeric` | 控制日期和钟点时间的输出格式。`.compactNumeric` 保持旧的斜杠/冒号格式（`五月十号` → `05/10`，`五点三十一分` → `5:31`）。`.chineseNumeric` 保留中文单位并使用阿拉伯数字，同时保留原文日期日单位（`五月十号` → `5月10号`，`五月十日` → `5月10日`，`五点三十一分` → `5点31分`）。`.spokenChinese` 保留匹配到的日期/时间原文。时长单位不受影响（`二十分钟` 仍然 → `20分钟`）。 |
 
 三个preset：
 - `ChineseITNConfig.default` —— 推荐用于真实ASR后处理（下游有LLM处理范围/估数解读）。仅在`enableSpecialTilde`上与WeText库默认值不同（本库False，上游True）。
@@ -269,6 +276,10 @@ var cfg = ChineseITNConfig.default
 cfg.enableMillion = true
 ChineseITN.normalize("两千五百万美元", config: cfg)
 // "$25000000"
+
+cfg.temporalOutputStyle = .chineseNumeric
+ChineseITN.normalize("五月十号五点三十一分", config: cfg)
+// "5月10号 5点31分"
 ```
 
 CLI对应flag（`chinese-itn`可执行文件）：
@@ -279,6 +290,7 @@ chinese-itn --enable-special-tilde        # enableSpecialTilde = true
 chinese-itn --enable-time-english         # enableTimeEnglishMapping = true
 chinese-itn --enable-million              # enableMillion = true
 chinese-itn --disable-standalone-number   # enableStandaloneNumber = false
+chinese-itn --temporal-style chinese-numeric
 chinese-itn --no-interjections            # removeInterjections = false
 chinese-itn --library-default             # 用weTextLibraryDefault preset
 chinese-itn --official-test               # 用weTextOfficialTest preset

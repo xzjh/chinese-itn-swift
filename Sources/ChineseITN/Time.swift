@@ -9,7 +9,7 @@
 //
 // WeText time tagger (time.py:30):
 //   tagger = (noon)? + hour + minute + (delete'分')? + (second)?
-//   verbalize = hour + ':' + minute + (':' + second)? + noon?
+//   default compact verbalize = hour + ':' + minute + (':' + second)? + noon?
 //
 // Examples per WeText official test/data/time.txt (we differ from
 // WeText in adding a space before a.m./p.m. per NIST SP 811 §10.3):
@@ -19,6 +19,9 @@
 //   早上一点零二          → 1:02 a.m.
 //   零点十分              → 00:10
 //   八点半                → 8:30
+//
+// `ChineseITNConfig.temporalOutputStyle` can instead emit Chinese
+// numeric units (`8点30分`) or preserve the spoken Chinese span.
 
 import Foundation
 
