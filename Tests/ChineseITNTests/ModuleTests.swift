@@ -100,20 +100,23 @@ final class FractionTests: XCTestCase {
 
 final class MoneyTests: XCTestCase {
 
+    func testDefaultKeepsCurrencySuffix() {
+        XCTAssertEqual(Money.normalize("两百欧元"), "200欧元")
+        XCTAssertEqual(Money.normalize("一千美元"), "1000美元")
+    }
+
     func testEuro() {
-        XCTAssertEqual(Money.normalize("两百欧元"), "€200")
-        XCTAssertEqual(Money.normalize("一千欧元"), "€1000")
+        XCTAssertEqual(Money.normalize("两百欧元", config: .weTextLibraryDefault), "€200")
+        XCTAssertEqual(Money.normalize("一千欧元", config: .weTextLibraryDefault), "€1000")
     }
 
     func testUSD() {
-        // WeText empirical: 美元 integer → code (USD); decimal/range
-        // → symbol ($). Verified via reference InverseNormalizer.
-        XCTAssertEqual(Money.normalize("一千美元"), "USD1000")
+        XCTAssertEqual(Money.normalize("一千美元", config: .weTextLibraryDefault), "$1000")
     }
 
     func testGBP() {
         // WeText empirical: 英镑 always symbol form (£).
-        XCTAssertEqual(Money.normalize("五百英镑"), "£500")
+        XCTAssertEqual(Money.normalize("五百英镑", config: .weTextLibraryDefault), "£500")
     }
 
     func testNonSymbolCurrency() {

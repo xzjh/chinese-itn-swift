@@ -339,7 +339,8 @@
     "category": "cardinal_in_sentence",
     "source": "WeText",
     "input": "我们走了三天",
-    "expected": "我们走了三天"
+    "expected": "我们走了三天",
+    "expected_swift": "我们走了3天"
   },
   {
     "category": "decimal",
@@ -518,7 +519,8 @@
     "category": "money",
     "source": "WeText",
     "input": "三块五",
-    "expected": "三块五"
+    "expected": "三块五",
+    "expected_swift": "3块五"
   },
   {
     "category": "money",
@@ -548,7 +550,8 @@
     "category": "money",
     "source": "WeText",
     "input": "五百美元",
-    "expected": "USD500"
+    "expected": "USD500",
+    "expected_swift": "$500"
   },
   {
     "category": "money",

@@ -5,12 +5,16 @@
 //
 // Recognition logic lives in Taggers.swift (`Money.tag`).
 //
-// Examples:
-//   两百欧元         → €200
-//   一千美元         → USD1000   (integer prefers code)
-//   一点二五美元      → $1.25     (decimal prefers symbol)
-//   八九千美元       → $8000~9000 (range prefers symbol)
-//   一点二五元       → ¥1.25
+// Default examples:
+//   两百欧元         → 200欧元
+//   一千美元         → 1000美元
+//   一点二五美元      → 1.25美元
+//   三千三百八十元五角八分 → 3380元5角8分
+//
+// With currencyOutputStyle = .symbol:
+//   一千美元         → $1000
+//   一点二五美元      → $1.25
+//   二到四美元       → $2到$4
 //   三千三百八十元五角八分 → ¥3380.58
 
 import Foundation

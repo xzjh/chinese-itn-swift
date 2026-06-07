@@ -6,11 +6,12 @@
 // Flags:
 //   --enable-0-to-9         Single Chinese digit chars (一..九, 零) convert
 //                           standalone. Default off (WeText library default).
-//   --enable-special-tilde  Spoken approximate ranges emit tilde forms
-//                           ("一二"→"1~2", "三五百"→"300~500"). Default off
-//                           (our library default; WeText defaults this on).
-//   --enable-time-english   Map noon prefix (早上→a.m.) and time units
-//                           (分钟→min, 小时→h). Default off (kept Chinese).
+//   --unit-style STYLE      Unit output style: chinese or symbol.
+//   --currency-style STYLE  Currency output style: chinese or symbol.
+//   --range-style STYLE     Range connector style: chinese or symbol.
+//   --spoken-range-style STYLE
+//                           Spoken approximate range style: preserve or expand.
+//   --enable-time-english   Map noon prefix (早上→a.m.). Default off.
 //   --temporal-style STYLE   Date/time output style:
 //                           compact, chinese-numeric, spoken-chinese.
 //                           Default compact preserves legacy output.
@@ -22,6 +23,7 @@
 //                           removes them (WeText default).
 //   --enable-million        Extend 万 prefix to thousand/hundred coefficients.
 //                           Default off.
+//   --enable-money          Compatibility alias for --currency-style symbol.
 //
 // Examples:
 //   echo "内存占用四点零八个G" | chinese-itn
@@ -43,9 +45,11 @@ func parseArgs() -> ChineseITNConfig {
         case "--enable-0-to-9":
             cfg.enable0To9 = true
         case "--enable-special-tilde":
-            cfg.enableSpecialTilde = true
+            cfg.spokenRangeStyle = .expand
+            cfg.rangeOutputStyle = .symbol
         case "--enable-time-english":
             cfg.enableTimeEnglishMapping = true
+            cfg.unitOutputStyle = .symbol
         case "--library-default":
             cfg = .weTextLibraryDefault
         case "--official-test":
@@ -54,8 +58,50 @@ func parseArgs() -> ChineseITNConfig {
             cfg.removeInterjections = false
         case "--enable-million":
             cfg.enableMillion = true
+        case "--enable-money":
+            cfg.currencyOutputStyle = .symbol
         case "--disable-standalone-number":
             cfg.enableStandaloneNumber = false
+        case "--unit-style":
+            guard i + 1 < args.count,
+                  let style = parseUnitStyle(args[i + 1]) else {
+                FileHandle.standardError.write(
+                    Data("chinese-itn: --unit-style expects chinese or symbol\n".utf8)
+                )
+                exit(2)
+            }
+            cfg.unitOutputStyle = style
+            i += 1
+        case "--currency-style":
+            guard i + 1 < args.count,
+                  let style = parseCurrencyStyle(args[i + 1]) else {
+                FileHandle.standardError.write(
+                    Data("chinese-itn: --currency-style expects chinese or symbol\n".utf8)
+                )
+                exit(2)
+            }
+            cfg.currencyOutputStyle = style
+            i += 1
+        case "--range-style":
+            guard i + 1 < args.count,
+                  let style = parseRangeStyle(args[i + 1]) else {
+                FileHandle.standardError.write(
+                    Data("chinese-itn: --range-style expects chinese or symbol\n".utf8)
+                )
+                exit(2)
+            }
+            cfg.rangeOutputStyle = style
+            i += 1
+        case "--spoken-range-style":
+            guard i + 1 < args.count,
+                  let style = parseSpokenRangeStyle(args[i + 1]) else {
+                FileHandle.standardError.write(
+                    Data("chinese-itn: --spoken-range-style expects preserve or expand\n".utf8)
+                )
+                exit(2)
+            }
+            cfg.spokenRangeStyle = style
+            i += 1
         case "--temporal-style":
             guard i + 1 < args.count,
                   let style = parseTemporalStyle(args[i + 1]) else {
@@ -77,12 +123,17 @@ func parseArgs() -> ChineseITNConfig {
 
             Flags:
               --enable-0-to-9            convert single 一..九, 零 standalone
-              --enable-special-tilde     emit spoken-range tilde forms (一二→1~2)
-              --enable-time-english      map 早上→a.m. and 分钟→min etc.
+              --unit-style STYLE         unit style: chinese or symbol
+              --currency-style STYLE     currency style: chinese or symbol
+              --range-style STYLE        range connector: chinese or symbol
+              --spoken-range-style STYLE spoken ranges: preserve or expand
+              --enable-special-tilde     alias: spoken-range expand + range symbol
+              --enable-time-english      alias: map 早上→a.m. and unit-style symbol
               --library-default          preset matching WeText InverseNormalizer()
               --official-test            preset matching WeText official tests
               --no-interjections         keep 呃/啊 fillers
               --enable-million           千/百+万 fully arabize (vs keep 万 suffix)
+              --enable-money             alias: currency-style symbol
               --disable-standalone-number  don't convert bare cardinal expressions
                                          (only convert when bound to unit/currency/etc)
               --temporal-style STYLE      date/time style: compact,
@@ -111,6 +162,41 @@ private func parseTemporalStyle(_ raw: String) -> ChineseITNTemporalOutputStyle?
         return .spokenChinese
     default:
         return nil
+    }
+}
+
+private func parseUnitStyle(_ raw: String) -> ChineseITNUnitOutputStyle? {
+    switch raw {
+    case "chinese": return .chinese
+    case "symbol": return .symbol
+    default: return nil
+    }
+}
+
+private func parseCurrencyStyle(_ raw: String) -> ChineseITNCurrencyOutputStyle? {
+    switch raw {
+    case "chinese": return .chinese
+    case "symbol": return .symbol
+    default: return nil
+    }
+}
+
+private func parseRangeStyle(_ raw: String) -> ChineseITNRangeOutputStyle? {
+    switch raw {
+    case "chinese", "chinese-connector", "chineseConnector":
+        return .chineseConnector
+    case "symbol":
+        return .symbol
+    default:
+        return nil
+    }
+}
+
+private func parseSpokenRangeStyle(_ raw: String) -> ChineseITNSpokenRangeStyle? {
+    switch raw {
+    case "preserve": return .preserve
+    case "expand": return .expand
+    default: return nil
     }
 }
 

@@ -67,6 +67,32 @@ enum Cardinal {
         return positionalValue(s)
     }
 
+    /// Parse a number in the shape exposed by WeText's `Cardinal().number`
+    /// FST when another tagger composes it. Unlike `parseToInt`, this keeps
+    /// visible magnitude markers such as 万/亿 in the output when the FST
+    /// would leave them visible.
+    static func parseFSTNumber(_ s: String,
+                               config: ChineseITNConfig,
+                               allowSingleDigit: Bool,
+                               allowTerminalBareYiOrZhao: Bool) -> String? {
+        if s.isEmpty { return nil }
+        if s.count == 1, let ch = s.first, digitChars.contains(ch) {
+            return allowSingleDigit ? digitMap[ch].map(String.init) : nil
+        }
+        if !allowTerminalBareYiOrZhao && endsWithBareYiOrZhao(s) {
+            return nil
+        }
+        return parse(s, enableMillion: config.enableMillion)
+    }
+
+    private static func endsWithBareYiOrZhao(_ s: String) -> Bool {
+        guard let last = s.last,
+              last == "亿" || last == "億" || last == "兆" else {
+            return false
+        }
+        return s.count > 1
+    }
+
     /// IP-like dotted form: digits.plus + (点 + digits.plus).plus.
     /// Returns "127.0.0.1" for "幺二七点零点零点幺". Requires at least
     /// two 点 separators (more than a single decimal point).
@@ -228,4 +254,3 @@ enum Cardinal {
         return Lattice.bestPath(chars: chars, candidates: candidates)
     }
 }
-

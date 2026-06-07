@@ -1142,55 +1142,64 @@
     "category": "tp_special_dash",
     "source": "WeText",
     "input": "十五六",
-    "expected": "15-6"
+    "expected": "15-6",
+    "expected_swift": "15~16"
   },
   {
     "category": "tp_special_dash",
     "source": "WeText",
     "input": "十七八",
-    "expected": "17-8"
+    "expected": "17-8",
+    "expected_swift": "17~18"
   },
   {
     "category": "tp_special_dash",
     "source": "WeText",
     "input": "十八九",
-    "expected": "18-9"
+    "expected": "18-9",
+    "expected_swift": "18~19"
   },
   {
     "category": "tp_special_dash",
     "source": "WeText",
     "input": "四十五六",
-    "expected": "45-6"
+    "expected": "45-6",
+    "expected_swift": "45~46"
   },
   {
     "category": "tp_special_dash",
     "source": "WeText",
     "input": "六十七八",
-    "expected": "67-8"
+    "expected": "67-8",
+    "expected_swift": "67~68"
   },
   {
     "category": "tp_special_dash",
     "source": "WeText",
     "input": "七百三四十",
-    "expected": "730-40"
+    "expected": "730-40",
+    "expected_swift": "730~740"
   },
   {
     "category": "tp_special_dash",
     "source": "WeText",
     "input": "八百五六十",
-    "expected": "850-60"
+    "expected": "850-60",
+    "expected_swift": "850~860"
   },
   {
     "category": "tp_special_dash",
     "source": "WeText",
     "input": "一万六七",
-    "expected": "16000-7000"
+    "expected": "16000-7000",
+    "expected_swift": "16000~17000"
   },
   {
     "category": "tp_special_dash",
     "source": "WeText",
     "input": "三万四五",
-    "expected": "34000-5000"
+    "expected": "34000-5000",
+    "expected_swift": "34000~35000"
   },
   {
     "category": "tp_mixed_sentence",

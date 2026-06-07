@@ -1,7 +1,7 @@
 // SpecialCardinal.swift
 // Spoken-language number patterns that don't fit regular positional
-// reading: "X或Y" ranges with ~ joiner and "X到Y" approximate ranges
-// with - joiner.
+// reading. Product default preserves these vague ranges verbatim;
+// `.spokenRangeStyle = .expand` turns them into explicit ranges.
 // Ported from WeTextProcessing data/number/special_tilde.tsv +
 // special_dash.tsv (Apache-2.0).
 //
@@ -12,10 +12,10 @@
 //   三四十万   → 30~40万
 //
 // special_dash inside cardinal compositions:
-//   十五六     → 15-6
-//   四十五六   → 45-6
-//   七百三四十 → 730-40
-//   一万六七   → 16000-7000
+//   十五六     → 15到16 / 15~16
+//   四十五六   → 45到46 / 45~46
+//   七百三四十 → 730到740 / 730~740
+//   一万六七   → 16000到17000 / 16000~17000
 //
 // Recognition logic lives in Taggers.swift (`SpecialCardinal.tag`).
 
@@ -52,6 +52,35 @@ enum SpecialCardinal {
         }
         return m
     }()
+
+    static func formatTildeRange(_ raw: String,
+                                 config: ChineseITNConfig) -> String {
+        raw.replacingOccurrences(of: "~", with: config.rangeConnector)
+    }
+
+    static func formatDashRange(_ raw: String,
+                                config: ChineseITNConfig) -> String {
+        let parts = raw.split(separator: "-", maxSplits: 1,
+                              omittingEmptySubsequences: false)
+        guard parts.count == 2 else {
+            return raw.replacingOccurrences(of: "-", with: config.rangeConnector)
+        }
+        let left = String(parts[0])
+        let rightSuffix = String(parts[1])
+        guard !left.isEmpty, !rightSuffix.isEmpty,
+              left.allSatisfy(\.isNumber),
+              rightSuffix.allSatisfy(\.isNumber) else {
+            return raw.replacingOccurrences(of: "-", with: config.rangeConnector)
+        }
+        let right: String
+        if rightSuffix.count < left.count {
+            let prefixLen = left.count - rightSuffix.count
+            right = String(left.prefix(prefixLen)) + rightSuffix
+        } else {
+            right = rightSuffix
+        }
+        return "\(left)\(config.rangeConnector)\(right)"
+    }
 
     static func normalize(_ text: String,
                           config: ChineseITNConfig = .default) -> String {

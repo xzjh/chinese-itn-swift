@@ -152,19 +152,22 @@ final class RobustnessTests: XCTestCase {
     }
 
     func testTPSpecialTildeCanonical() {
-        // special_tilde is disabled in `.default`; verify the feature
-        // still works under `.weTextLibraryDefault`.
-        XCTAssertEqual(
-            ChineseITN.normalize("三五百", config: .weTextLibraryDefault),
-            "300~500")
-        XCTAssertEqual(
-            ChineseITN.normalize("五六十", config: .weTextLibraryDefault),
-            "50~60")
+        XCTAssertEqual(ChineseITN.normalize("三五百"), "三五百")
+        var cfg = ChineseITNConfig.default
+        cfg.spokenRangeStyle = .expand
+        cfg.rangeOutputStyle = .symbol
+        XCTAssertEqual(ChineseITN.normalize("三五百", config: cfg), "300~500")
+        XCTAssertEqual(ChineseITN.normalize("五六十", config: cfg), "50~60")
     }
 
     func testTPSpecialDashCanonical() {
-        XCTAssertEqual(ChineseITN.normalize("十五六"), "15-6")
-        XCTAssertEqual(ChineseITN.normalize("七百三四十"), "730-40")
+        XCTAssertEqual(ChineseITN.normalize("十五六"), "十五六")
+        XCTAssertEqual(ChineseITN.normalize("七百三四十"), "七百三四十")
+        var cfg = ChineseITNConfig.default
+        cfg.spokenRangeStyle = .expand
+        cfg.rangeOutputStyle = .symbol
+        XCTAssertEqual(ChineseITN.normalize("十五六", config: cfg), "15~16")
+        XCTAssertEqual(ChineseITN.normalize("七百三四十", config: cfg), "730~740")
     }
 
     // ─── False-positive guards ────────────────────────────────────

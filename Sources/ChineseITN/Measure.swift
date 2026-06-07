@@ -5,9 +5,8 @@
 //
 // Recognition logic lives in Taggers.swift (`Measure.tag`).
 //
-// Examples (space between value and English unit symbol per SI /
-// NIST SP 811 / ISO 80000-1; bare ° excepted, Chinese-kept units like
-// 盒/个 stay glued per Chinese style):
+// Examples in symbol style (space between value and English unit
+// symbol per SI / NIST SP 811 / ISO 80000-1; bare ° excepted):
 //   一千克            → 1 kg
 //   重达二十五千克     → 重达25 kg
 //   三百二十四点七五克 → 324.75 g
@@ -137,21 +136,15 @@ enum Measure {
         "顿", "牛", "次", "号", "亩",
     ]
 
-    /// Subset of `unitMap` keys that name a duration. Gated by
-    /// `enableTimeEnglishMapping` so callers can opt to keep these
-    /// units Chinese ("二十分钟" → "20分钟" instead of "20min") while
-    /// other unit mappings still apply.
-    static let timeUnits: Set<String> = [
-        "分钟", "小时", "毫秒", "微秒", "纳秒", "皮秒", "秒",
-    ]
-
-    /// Look up a unit name and return its output form (arabized
-    /// abbreviation OR kept Chinese), or nil if not a unit. When
-    /// `enableTimeEnglishMapping` is false, time-unit subset stays
-    /// Chinese (output equals input).
+    /// Look up a unit name and return its output form, or nil if not
+    /// a unit. Product default keeps the Chinese unit text; symbol
+    /// style uses scientific / English abbreviations where known.
     static func resolveUnit(_ cn: String,
-                            enableTimeEnglish: Bool = true) -> String? {
-        if !enableTimeEnglish && timeUnits.contains(cn) {
+                            config: ChineseITNConfig) -> String? {
+        guard unitMap[cn] != nil || unitChineseKept.contains(cn) else {
+            return nil
+        }
+        if config.unitOutputStyle == .chinese {
             return cn
         }
         if let en = unitMap[cn] { return en }

@@ -316,7 +316,7 @@ extension Fraction {
                                     out.append(Candidate(
                                         startIdx: i,
                                         endIdx: k,
-                                        output: "\(signOut)\(v)~\(b)%",
+                                        output: "\(signOut)\(v)%\(config.rangeConnector)\(b)%",
                                         weight: TaggerWeight.fraction,
                                         source: "percent_range"
                                     ))
@@ -358,19 +358,25 @@ extension Fraction {
 
 extension Money {
 
-    /// Emit candidates per WeText money.py:
-    ///   tagger = number + currency + decimal?
-    /// Plus tilde/dash range + currency forms.
+    /// Emit money candidates. Chinese style keeps currency names as
+    /// suffix units ("一千美元" -> "1000美元"). Symbol style emits a
+    /// currency prefix ("一千美元" -> "$1000").
     static func tag(_ chars: [Character],
                     config: ChineseITNConfig) -> [Candidate] {
+        if config.currencyOutputStyle == .symbol {
+            return tagSymbolPrefix(chars, config: config)
+        }
+        return tagCurrencySuffix(chars, config: config)
+    }
+
+    private static func tagSymbolPrefix(_ chars: [Character],
+                                        config: ChineseITNConfig) -> [Candidate] {
         var out: [Candidate] = []
         let n = chars.count
         let cnCardSet = Set(cnCardinalClass)
         let cnDigitSet = Set(cnDigitClass)
 
-        // All currency keys sorted longest-first
-        let currencies = Set(symbolPrefix.keys).union(codePrefix.keys)
-        let currenciesSorted = currencies.sorted { $0.count > $1.count }
+        let currenciesSorted = normalizedCurrenciesSorted
 
         for i in 0..<n {
             // Cardinal+currency (with optional decimal payload)
@@ -378,30 +384,60 @@ extension Money {
             while j < n && cnCardSet.contains(chars[j]) { j += 1 }
             let numValid: Bool = j > i && {
                 let numStr = String(chars[i..<j])
-                return Cardinal.parse(numStr, enableMillion: config.enableMillion) != nil
-                    || (numStr.count == 1 && digitChars.contains(numStr.first!))
+                return parseCurrencyUnitNumber(
+                    numStr,
+                    config: config,
+                    allowSingleDigit: true
+                ) != nil
             }()
             if j > i && numValid {
                 let numStr = String(chars[i..<j])
+                if let firstValue = parseCurrencyRangeEndpoint(
+                    numStr,
+                    config: config,
+                    forceArabicDigit: true
+                ),
+                   j < n && chars[j] == "到" {
+                    let rStart = j + 1
+                    var rEnd = rStart
+                    while rEnd < n && cnCardSet.contains(chars[rEnd]) { rEnd += 1 }
+                    if rEnd > rStart,
+                       let secondValue = parseCurrencyRangeEndpoint(
+                            String(chars[rStart..<rEnd]),
+                            config: config,
+                            forceArabicDigit: true
+                       ) {
+                        for cur in currenciesSorted {
+                            if rEnd + cur.count <= n,
+                               String(chars[rEnd..<(rEnd + cur.count)]) == cur {
+                                let prefix = currencyPrefixFor(cur)
+                                out.append(Candidate(
+                                    startIdx: i,
+                                    endIdx: rEnd + cur.count,
+                                    output: "\(prefix)\(firstValue)\(config.rangeConnector)\(prefix)\(secondValue)",
+                                    weight: TaggerWeight.money,
+                                    source: "money_range"
+                                ))
+                            }
+                        }
+                    }
+                }
 
                 // Try currency right after num
                 for cur in currenciesSorted {
                     if j + cur.count <= n {
                         let candidate = String(chars[j..<(j + cur.count)])
                         if candidate == cur {
-                            if let intVal = Cardinal.parseToInt(numStr) {
-                                // Single-digit + 元 stays per WeText
-                                if cur == "元" && numStr.count == 1,
-                                   let ch = numStr.first,
-                                   digitChars.contains(ch) {
-                                    continue
-                                }
-                                let prefix = currencyPrefixFor(
-                                    cur, hasDecimal: false, hasRange: false)
+                            if let value = parseCurrencyAmountNumber(
+                                numStr,
+                                config: config,
+                                forceArabicDigit: true
+                            ) {
+                                let prefix = currencyPrefixFor(cur)
                                 out.append(Candidate(
                                     startIdx: i,
                                     endIdx: j + cur.count,
-                                    output: "\(prefix)\(intVal)",
+                                    output: "\(prefix)\(value)",
                                     weight: TaggerWeight.money,
                                     source: "money_cardinal"
                                 ))
@@ -423,8 +459,7 @@ extension Money {
                                 if k + cur.count <= n {
                                     let candidate = String(chars[k..<(k + cur.count)])
                                     if candidate == cur {
-                                        let prefix = currencyPrefixFor(
-                                            cur, hasDecimal: true, hasRange: false)
+                                        let prefix = currencyPrefixFor(cur)
                                         out.append(Candidate(
                                             startIdx: i,
                                             endIdx: k + cur.count,
@@ -441,7 +476,7 @@ extension Money {
             }
 
             // 元角分 decimal composition: <num>元<digit>(毛|角)[<digit>分]
-            if let (yEnd, yOut) = matchYuanJiaoFen(chars: chars, start: i) {
+            if let (yEnd, yOut) = matchYuanJiaoFenSymbol(chars: chars, start: i) {
                 out.append(Candidate(
                     startIdx: i,
                     endIdx: yEnd,
@@ -451,28 +486,34 @@ extension Money {
                 ))
             }
 
-            // tilde range: tilde key + currency
-            if config.enableSpecialTilde {
-                for key in tildeKeysSorted {
-                    if i + key.count <= n {
-                        let candidate = String(chars[i..<(i + key.count)])
-                        if candidate == key,
-                           let val = SpecialCardinal.tildePairs[key] {
-                            for cur in currenciesSorted {
-                                let curStart = i + key.count
-                                if curStart + cur.count <= n {
-                                    let curCand = String(chars[curStart..<(curStart + cur.count)])
-                                    if curCand == cur {
-                                        let prefix = currencyPrefixFor(
-                                            cur, hasDecimal: false, hasRange: true)
-                                        out.append(Candidate(
-                                            startIdx: i,
-                                            endIdx: curStart + cur.count,
-                                            output: "\(prefix)\(val)",
-                                            weight: TaggerWeight.money,
-                                            source: "money_tilde"
-                                        ))
-                                    }
+            // tilde range: tilde key + currency. When special_tilde is
+            // disabled, emit identity over the full span to avoid partial
+            // conversion like "八USD9000".
+            for key in tildeKeysSorted {
+                if i + key.count <= n {
+                    let candidate = String(chars[i..<(i + key.count)])
+                    if candidate == key,
+                       let val = SpecialCardinal.tildePairs[key] {
+                        for cur in currenciesSorted {
+                            let curStart = i + key.count
+                            if curStart + cur.count <= n {
+                                let curCand = String(chars[curStart..<(curStart + cur.count)])
+                                if curCand == cur {
+                                    let prefix = currencyPrefixFor(cur)
+                                    let output = config.spokenRangeStyle == .expand
+                                        ? formatCurrencyRange(
+                                            SpecialCardinal.formatTildeRange(val, config: config),
+                                            prefix: prefix,
+                                            config: config
+                                        )
+                                        : String(chars[i..<(curStart + cur.count)])
+                                    out.append(Candidate(
+                                        startIdx: i,
+                                        endIdx: curStart + cur.count,
+                                        output: output,
+                                        weight: TaggerWeight.money,
+                                        source: "money_tilde"
+                                    ))
                                 }
                             }
                         }
@@ -490,12 +531,19 @@ extension Money {
                            let val = SpecialCardinal.dashPairs[key] {
                             let leadOut = lead.isEmpty ? "1"
                                 : (digitMap[lead.first!].map(String.init) ?? "")
-                            let prefix = currencyPrefixFor(
-                                cur, hasDecimal: false, hasRange: true)
+                            let prefix = currencyPrefixFor(cur)
+                            let raw = "\(leadOut)\(val)"
+                            let output = config.spokenRangeStyle == .expand
+                                ? formatCurrencyRange(
+                                    SpecialCardinal.formatDashRange(raw, config: config),
+                                    prefix: prefix,
+                                    config: config
+                                )
+                                : String(chars[i..<(endOfNum + cur.count)])
                             out.append(Candidate(
                                 startIdx: i,
                                 endIdx: endOfNum + cur.count,
-                                output: "\(prefix)\(leadOut)\(val)",
+                                output: output,
                                 weight: TaggerWeight.money,
                                 source: "money_dash"
                             ))
@@ -507,17 +555,247 @@ extension Money {
         return out
     }
 
-    /// Per-currency: pick symbol vs code based on context, mirroring
-    /// WeText empirical behavior.
-    private static func currencyPrefixFor(_ currency: String,
-                                          hasDecimal: Bool,
-                                          hasRange: Bool) -> String {
-        let preferSymbol = hasDecimal || hasRange
-            || symbolOnlyForInteger.contains(currency)
-        if preferSymbol {
-            return symbolPrefix[currency] ?? codePrefix[currency] ?? ""
+    private static func tagCurrencySuffix(_ chars: [Character],
+                                          config: ChineseITNConfig) -> [Candidate] {
+        var out: [Candidate] = []
+        let n = chars.count
+        let cnCardSet = Set(cnCardinalClass)
+        let cnDigitSet = Set(cnDigitClass)
+        let currenciesSorted = normalizedCurrenciesSorted
+
+        for i in 0..<n {
+            var j = i
+            while j < n && cnCardSet.contains(chars[j]) { j += 1 }
+            if j > i {
+                let numStr = String(chars[i..<j])
+                if let value = parseCurrencyAmountNumber(
+                    numStr,
+                    config: config,
+                    forceArabicDigit: false
+                ) {
+                    if j < n && chars[j] == "到" {
+                        let rStart = j + 1
+                        var rEnd = rStart
+                        while rEnd < n && cnCardSet.contains(chars[rEnd]) { rEnd += 1 }
+                        if rEnd > rStart,
+                           let firstRangeValue = parseCurrencyRangeEndpoint(
+                                numStr,
+                                config: config,
+                                forceArabicDigit: false
+                           ),
+                           let secondValue = parseCurrencyRangeEndpoint(
+                                String(chars[rStart..<rEnd]),
+                                config: config,
+                                forceArabicDigit: false
+                           ) {
+                            for cur in currenciesSorted {
+                                if rEnd + cur.count <= n,
+                                   String(chars[rEnd..<(rEnd + cur.count)]) == cur {
+                                    out.append(Candidate(
+                                        startIdx: i,
+                                        endIdx: rEnd + cur.count,
+                                        output: "\(firstRangeValue)\(config.rangeConnector)\(secondValue)\(cur)",
+                                        weight: TaggerWeight.money,
+                                        source: "money_suffix_range"
+                                    ))
+                                }
+                            }
+                        }
+                    }
+
+                    for cur in currenciesSorted {
+                        if j + cur.count <= n,
+                           String(chars[j..<(j + cur.count)]) == cur {
+                            out.append(Candidate(
+                                startIdx: i,
+                                endIdx: j + cur.count,
+                                output: "\(value)\(cur)",
+                                weight: TaggerWeight.money,
+                                source: "money_suffix_cardinal"
+                            ))
+                        }
+                    }
+                }
+
+                // Decimal: numStr + 点 + cnDigits + currency.
+                if j < n && (chars[j] == "点" || chars[j] == "點"),
+                   let intOut = parseCurrencyUnitNumber(
+                        numStr,
+                        config: config,
+                        allowSingleDigit: true
+                   ) {
+                    var k = j + 1
+                    while k < n && cnDigitSet.contains(chars[k]) { k += 1 }
+                    if k > j + 1 {
+                        let fracStr = String(chars[(j + 1)..<k])
+                        let fracDigits = fracStr.compactMap { digitMap[$0] }
+                        if fracDigits.count == fracStr.count {
+                            for cur in currenciesSorted {
+                                if k + cur.count <= n,
+                                   String(chars[k..<(k + cur.count)]) == cur {
+                                    out.append(Candidate(
+                                        startIdx: i,
+                                        endIdx: k + cur.count,
+                                        output: "\(intOut).\(String(fracDigits))\(cur)",
+                                        weight: TaggerWeight.money,
+                                        source: "money_suffix_decimal"
+                                    ))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 元角分 stays as Chinese suffix units when money normalization is off.
+            if let (yEnd, yOut) = matchYuanJiaoFenSuffix(chars: chars,
+                                                        start: i,
+                                                        config: config) {
+                out.append(Candidate(
+                    startIdx: i,
+                    endIdx: yEnd,
+                    output: yOut,
+                    weight: TaggerWeight.money,
+                    source: "money_suffix_yjf"
+                ))
+            }
+
+            for key in tildeKeysSorted {
+                if i + key.count <= n,
+                   String(chars[i..<(i + key.count)]) == key,
+                   let val = SpecialCardinal.tildePairs[key] {
+                    let curStart = i + key.count
+                    for cur in currenciesSorted {
+                        if curStart + cur.count <= n,
+                           String(chars[curStart..<(curStart + cur.count)]) == cur {
+                            let output = config.spokenRangeStyle == .expand
+                                ? "\(SpecialCardinal.formatTildeRange(val, config: config))\(cur)"
+                                : String(chars[i..<(curStart + cur.count)])
+                            out.append(Candidate(
+                                startIdx: i,
+                                endIdx: curStart + cur.count,
+                                output: output,
+                                weight: TaggerWeight.money,
+                                source: "money_suffix_tilde"
+                            ))
+                        }
+                    }
+                }
+            }
+
+            for (form, lead, key) in dashFormsAt(chars: chars, pos: i) {
+                let endOfNum = i + form.count
+                for cur in currenciesSorted {
+                    if endOfNum + cur.count <= n {
+                        let curCand = String(chars[endOfNum..<(endOfNum + cur.count)])
+                        if curCand == cur,
+                           let val = SpecialCardinal.dashPairs[key] {
+                            let leadOut = lead.isEmpty ? "1"
+                                : (digitMap[lead.first!].map(String.init) ?? "")
+                            let output = config.spokenRangeStyle == .expand
+                                ? "\(SpecialCardinal.formatDashRange("\(leadOut)\(val)", config: config))\(cur)"
+                                : String(chars[i..<(endOfNum + cur.count)])
+                            out.append(Candidate(
+                                startIdx: i,
+                                endIdx: endOfNum + cur.count,
+                                output: output,
+                                weight: TaggerWeight.money,
+                                source: "money_suffix_dash"
+                            ))
+                        }
+                    }
+                }
+            }
         }
-        return codePrefix[currency] ?? symbolPrefix[currency] ?? ""
+        return out
+    }
+
+    private static let normalizedCurrenciesSorted: [String] =
+        Set(symbolPrefix.keys).union(codePrefix.keys)
+            .sorted { $0.count > $1.count }
+
+    private static func parseCurrencyUnitNumber(_ s: String,
+                                                config: ChineseITNConfig,
+                                                allowSingleDigit: Bool) -> String? {
+        Cardinal.parseFSTNumber(
+            s,
+            config: config,
+            allowSingleDigit: allowSingleDigit,
+            allowTerminalBareYiOrZhao: true
+        )
+    }
+
+    private static func parseCurrencyRangeEndpoint(_ s: String,
+                                                   config: ChineseITNConfig,
+                                                   forceArabicDigit: Bool) -> String? {
+        if s.count == 1,
+           let first = s.first,
+           digitChars.contains(first) {
+            if config.enable0To9 || forceArabicDigit,
+               let d = digitMap[first] {
+                return String(d)
+            }
+            return s
+        }
+        if let kept = singleDigitMagnitudeOutput(
+            s,
+            convertDigit: config.enable0To9 || forceArabicDigit
+        ) {
+            return kept
+        }
+        return Cardinal.parseFSTNumber(
+            s,
+            config: config,
+            allowSingleDigit: config.enable0To9 || forceArabicDigit,
+            allowTerminalBareYiOrZhao: true
+        )
+    }
+
+    private static func parseCurrencyAmountNumber(_ s: String,
+                                                  config: ChineseITNConfig,
+                                                  forceArabicDigit: Bool) -> String? {
+        if let kept = singleDigitMagnitudeOutput(
+            s,
+            convertDigit: config.enable0To9 || forceArabicDigit
+        ) {
+            return kept
+        }
+        return parseCurrencyUnitNumber(
+            s,
+            config: config,
+            allowSingleDigit: config.enable0To9 || forceArabicDigit
+        )
+    }
+
+    private static func singleDigitMagnitudeOutput(_ s: String,
+                                                   convertDigit: Bool) -> String? {
+        let chars = Array(s)
+        guard chars.count == 2,
+              let first = chars.first,
+              let last = chars.last,
+              digitChars.contains(first),
+              last == "万" || last == "萬" || last == "亿" || last == "億"
+        else { return nil }
+        let suffix = (last == "萬") ? "万" : (last == "億" ? "亿" : String(last))
+        if convertDigit, let d = digitMap[first] {
+            return "\(d)\(suffix)"
+        }
+        return "\(first)\(suffix)"
+    }
+
+    private static func currencyPrefixFor(_ currency: String) -> String {
+        if currency == "人民币" { return "¥" }
+        return symbolPrefix[currency] ?? codePrefix[currency] ?? ""
+    }
+
+    private static func formatCurrencyRange(_ range: String,
+                                            prefix: String,
+                                            config: ChineseITNConfig) -> String {
+        let parts = range.components(separatedBy: config.rangeConnector)
+        if parts.count == 2 {
+            return "\(prefix)\(parts[0])\(config.rangeConnector)\(prefix)\(parts[1])"
+        }
+        return "\(prefix)\(range)"
     }
 
     static let tildeKeysSorted: [String] = SpecialCardinal.tildePairs.keys
@@ -567,10 +845,9 @@ extension Money {
         return results
     }
 
-    /// Match <cnCard>+元<cnDigit>(毛|角)[<cnDigit>分].
-    /// Returns (endIdx, output).
-    private static func matchYuanJiaoFen(chars: [Character],
-                                         start: Int) -> (Int, String)? {
+    /// Match <cnCard>+元<cnDigit>(毛|角)[<cnDigit>分] and output ¥decimal.
+    private static func matchYuanJiaoFenSymbol(chars: [Character],
+                                               start: Int) -> (Int, String)? {
         let n = chars.count
         let cnCardSet = Set(cnCardinalClass)
         var j = start
@@ -589,6 +866,33 @@ extension Money {
         }
         return (k, "¥\(intVal).\(jiao)")
     }
+
+    /// Match <cnCard>+元<cnDigit>(毛|角)[<cnDigit>分] and keep units suffix.
+    private static func matchYuanJiaoFenSuffix(chars: [Character],
+                                               start: Int,
+                                               config: ChineseITNConfig) -> (Int, String)? {
+        let n = chars.count
+        let cnCardSet = Set(cnCardinalClass)
+        var j = start
+        while j < n && cnCardSet.contains(chars[j]) { j += 1 }
+        guard j > start, j < n, chars[j] == "元" else { return nil }
+        let intStr = String(chars[start..<j])
+        guard let intOut = parseCurrencyUnitNumber(
+            intStr,
+            config: config,
+            allowSingleDigit: true
+        ) else { return nil }
+        var k = j + 1
+        guard k < n, let jiao = digitMap[chars[k]] else { return nil }
+        k += 1
+        guard k < n, chars[k] == "毛" || chars[k] == "角" else { return nil }
+        let jiaoUnit = chars[k]
+        k += 1
+        if k + 1 < n, let fen = digitMap[chars[k]], chars[k + 1] == "分" {
+            return (k + 2, "\(intOut)元\(jiao)\(jiaoUnit)\(fen)分")
+        }
+        return (k, "\(intOut)元\(jiao)\(jiaoUnit)")
+    }
 }
 
 // MARK: - Math tagger
@@ -600,7 +904,6 @@ extension MathNormalize {
                     config: ChineseITNConfig) -> [Candidate] {
         var out: [Candidate] = []
         let n = chars.count
-        let cnCardSet = Set(cnCardinalClass)
 
         for i in 0..<n {
             // Optional sign
@@ -613,42 +916,33 @@ extension MathNormalize {
             if signLen == 0, let s = Cardinal.signMap[String(chars[i])] {
                 signLen = 1; signOut = s
             }
-            var cursor = i + signLen
 
-            // First number
-            let firstStart = cursor
-            while cursor < n && cnCardSet.contains(chars[cursor]) { cursor += 1 }
-            if cursor == firstStart { continue }
-            // Find longest valid number prefix
-            var firstEnd = cursor
-            while firstEnd > firstStart {
-                let cand = String(chars[firstStart..<firstEnd])
-                if Cardinal.parseToInt(cand) != nil { break }
-                firstEnd -= 1
-            }
-            guard firstEnd > firstStart,
-                  let firstVal = Cardinal.parseToInt(String(chars[firstStart..<firstEnd]))
+            guard let first = matchMathNumber(chars: chars,
+                                              start: i + signLen,
+                                              config: config)
             else { continue }
 
-            var output = "\(signOut)\(firstVal)"
-            cursor = firstEnd
+            var output = "\(signOut)\(first.output)"
+            var cursor = first.endIdx
 
             // (operator + number)+ — must have at least one
             var pairCount = 0
             while cursor < n {
                 // Try op at cursor (longest first)
-                var opMatched: (op: String, len: Int)?
+                var opMatched: (raw: String, op: String, len: Int)?
                 for opLen in [2, 1] {
                     if cursor + opLen <= n {
                         let opCand = String(chars[cursor..<(cursor + opLen)])
                         if let op = operatorMap[opCand] {
-                            opMatched = (op, opLen)
+                            opMatched = (opCand, op, opLen)
                             break
                         }
                     }
                 }
                 guard let opM = opMatched else { break }
+                let isRangeOperator = opM.raw == "到"
                 let nextStart = cursor + opM.len
+
                 // Optional sign on next number
                 var sLen = 0
                 var sOut = ""
@@ -660,19 +954,23 @@ extension MathNormalize {
                    let s = Cardinal.signMap[String(chars[nextStart])] {
                     sLen = 1; sOut = s
                 }
-                let numStart = nextStart + sLen
-                var numEnd = numStart
-                while numEnd < n && cnCardSet.contains(chars[numEnd]) { numEnd += 1 }
-                // Backtrack to longest valid number
-                while numEnd > numStart {
-                    if Cardinal.parseToInt(String(chars[numStart..<numEnd])) != nil { break }
-                    numEnd -= 1
-                }
-                guard numEnd > numStart,
-                      let nVal = Cardinal.parseToInt(String(chars[numStart..<numEnd]))
+
+                guard let next = isRangeOperator
+                        ? matchRangeNumber(chars: chars,
+                                           start: nextStart + sLen,
+                                           config: config)
+                        : matchMathNumber(chars: chars,
+                                          start: nextStart + sLen,
+                                          config: config)
                 else { break }
-                output += "\(opM.op)\(sOut)\(nVal)"
-                cursor = numEnd
+                if pairCount == 0, isRangeOperator,
+                   let firstRangeOut = rangeNumberOutput(first.raw,
+                                                         config: config) {
+                    output = "\(signOut)\(firstRangeOut)"
+                }
+                let opOutput = isRangeOperator ? config.rangeConnector : opM.op
+                output += "\(opOutput)\(sOut)\(next.output)"
+                cursor = next.endIdx
                 pairCount += 1
             }
 
@@ -687,6 +985,84 @@ extension MathNormalize {
             }
         }
         return out
+    }
+
+    private static func matchMathNumber(chars: [Character],
+                                        start: Int,
+                                        config: ChineseITNConfig)
+        -> (endIdx: Int, output: String, raw: String)? {
+        let n = chars.count
+        let cnCardSet = Set(cnCardinalClass)
+        var end = start
+        while end < n && cnCardSet.contains(chars[end]) { end += 1 }
+        guard end > start else { return nil }
+
+        for candidateEnd in stride(from: end, through: start + 1, by: -1) {
+            let candidate = String(chars[start..<candidateEnd])
+            if let output = Cardinal.parseFSTNumber(
+                candidate,
+                config: config,
+                allowSingleDigit: true,
+                allowTerminalBareYiOrZhao: true
+            ) {
+                return (candidateEnd, output, candidate)
+            }
+        }
+        return nil
+    }
+
+    private static func matchRangeNumber(chars: [Character],
+                                         start: Int,
+                                         config: ChineseITNConfig)
+        -> (endIdx: Int, output: String, raw: String)? {
+        let n = chars.count
+        let cnCardSet = Set(cnCardinalClass)
+        var end = start
+        while end < n && cnCardSet.contains(chars[end]) { end += 1 }
+        guard end > start else { return nil }
+
+        for candidateEnd in stride(from: end, through: start + 1, by: -1) {
+            let candidate = String(chars[start..<candidateEnd])
+            if let output = rangeNumberOutput(candidate, config: config) {
+                return (candidateEnd, output, candidate)
+            }
+        }
+        return nil
+    }
+
+    private static func rangeNumberOutput(_ s: String,
+                                          config: ChineseITNConfig) -> String? {
+        if s.count == 1,
+           let first = s.first,
+           digitChars.contains(first),
+           !config.enable0To9 {
+            return s
+        }
+        if let kept = singleDigitMagnitudeOutput(s, convertDigit: config.enable0To9) {
+            return kept
+        }
+        return Cardinal.parseFSTNumber(
+            s,
+            config: config,
+            allowSingleDigit: config.enable0To9,
+            allowTerminalBareYiOrZhao: true
+        )
+    }
+
+    private static func singleDigitMagnitudeOutput(_ s: String,
+                                                   convertDigit: Bool) -> String? {
+        let chars = Array(s)
+        guard chars.count == 2,
+              let first = chars.first,
+              let last = chars.last,
+              digitChars.contains(first),
+              last == "万" || last == "萬" || last == "亿" || last == "億"
+        else { return nil }
+        let suffix = (last == "萬") ? "万" : (last == "億" ? "亿" : String(last))
+        if convertDigit, let d = digitMap[first] {
+            return "\(d)\(suffix)"
+        }
+        return "\(first)\(suffix)"
     }
 }
 
@@ -882,8 +1258,8 @@ extension SpecialCardinal {
                 if kEnd < n {
                     let next = chars[kEnd]
                     if next == "万" || next == "亿" || next == "萬" || next == "億" {
-                        let output = config.enableSpecialTilde
-                            ? "\(val)\(next)"
+                        let output = config.spokenRangeStyle == .expand
+                            ? "\(formatTildeRange(val, config: config))\(next)"
                             : "\(keepStr)\(next)"
                         out.append(Candidate(
                             startIdx: i, endIdx: kEnd + 1,
@@ -897,7 +1273,9 @@ extension SpecialCardinal {
                 }
                 out.append(Candidate(
                     startIdx: i, endIdx: kEnd,
-                    output: config.enableSpecialTilde ? val : keepStr,
+                    output: config.spokenRangeStyle == .expand
+                        ? formatTildeRange(val, config: config)
+                        : keepStr,
                     weight: TaggerWeight.specialCardinal,
                     source: "special_tilde"
                 ))
@@ -920,7 +1298,9 @@ extension SpecialCardinal {
                     }
                     out.append(Candidate(
                         startIdx: i, endIdx: endIdx,
-                        output: "1\(val)\(suffix)",
+                        output: config.spokenRangeStyle == .expand
+                            ? "\(formatDashRange("1\(val)", config: config))\(suffix)"
+                            : String(chars[i..<endIdx]),
                         weight: TaggerWeight.specialCardinal,
                         source: "special_dash_shi"
                     ))
@@ -945,7 +1325,9 @@ extension SpecialCardinal {
                     }
                     out.append(Candidate(
                         startIdx: i, endIdx: endIdx,
-                        output: "\(lead)\(val)\(suffix)",
+                        output: config.spokenRangeStyle == .expand
+                            ? "\(formatDashRange("\(lead)\(val)", config: config))\(suffix)"
+                            : String(chars[i..<endIdx]),
                         weight: TaggerWeight.specialCardinal,
                         source: "special_dash_digit_shi"
                     ))
@@ -970,7 +1352,9 @@ extension SpecialCardinal {
                     }
                     out.append(Candidate(
                         startIdx: i, endIdx: endIdx,
-                        output: "\(lead)\(val)\(suffix)",
+                        output: config.spokenRangeStyle == .expand
+                            ? "\(formatDashRange("\(lead)\(val)", config: config))\(suffix)"
+                            : String(chars[i..<endIdx]),
                         weight: TaggerWeight.specialCardinal,
                         source: "special_dash_digit_bai"
                     ))
@@ -988,7 +1372,10 @@ extension SpecialCardinal {
                     if i + 4 >= n || !cnCardSet.contains(chars[i + 4]) {
                         out.append(Candidate(
                             startIdx: i, endIdx: i + 4,
-                            output: "\(lead)\(d2)000-\(d3)000",
+                            output: config.spokenRangeStyle == .expand
+                                ? formatDashRange("\(lead)\(d2)000-\(d3)000",
+                                                  config: config)
+                                : String(chars[i..<(i + 4)]),
                             weight: TaggerWeight.specialCardinal,
                             source: "special_dash_wan"
                         ))
@@ -1053,7 +1440,7 @@ extension Measure {
                                         chars: chars, n: n,
                                         startIdx: i, valueEnd: k, valueStr: valStr,
                                         units: units, out: &out, source: "measure_decimal",
-                                        enableTimeEnglish: config.enableTimeEnglishMapping
+                                        config: config
                                     )
                                 }
                             }
@@ -1068,14 +1455,14 @@ extension Measure {
                             if k > rStart {
                                 for kEnd in (rStart + 1)...k {
                                     let n2Str = String(chars[rStart..<kEnd])
-                                    if let v1 = Cardinal.parseToInt(numStr),
-                                       let v2 = Cardinal.parseToInt(n2Str) {
-                                        let valStr = "\(v1)~\(v2)"
+                                    if let v1 = parseMeasureRangeEndpoint(numStr, config: config),
+                                       let v2 = parseMeasureRangeEndpoint(n2Str, config: config) {
+                                        let valStr = "\(v1)\(config.rangeConnector)\(v2)"
                                         emitWithUnit(
                                             chars: chars, n: n,
                                             startIdx: i, valueEnd: kEnd, valueStr: valStr,
                                             units: units, out: &out, source: "measure_range",
-                                            enableTimeEnglish: config.enableTimeEnglishMapping
+                                            config: config
                                         )
                                     }
                                 }
@@ -1092,8 +1479,7 @@ extension Measure {
                     let dEnd = dStart + denomUnit.count
                     guard dEnd <= n,
                           String(chars[dStart..<dEnd]) == denomUnit else { continue }
-                    guard let denomEN = resolveUnit(denomUnit,
-                            enableTimeEnglish: config.enableTimeEnglishMapping)
+                    guard let denomEN = resolveUnit(denomUnit, config: config)
                           else { continue }
 
                     // Find max cn-card run
@@ -1104,11 +1490,11 @@ extension Measure {
                     // Iterate num span length SHORTEST first
                     for numEnd in (dEnd + 1)...j {
                         let firstNumStr = String(chars[dEnd..<numEnd])
-                        guard let v1 = Cardinal.parseToInt(firstNumStr) else { continue }
+                        guard let v1 = parseMeasureNumber(firstNumStr, config: config) else { continue }
 
                         // Optional 到 + second num
                         var ranges: [(end: Int, valueStr: String)] = [
-                            (numEnd, "\(v1)")
+                            (numEnd, v1)
                         ]
                         if numEnd < n && chars[numEnd] == "到" {
                             let rStart = numEnd + 1
@@ -1117,8 +1503,8 @@ extension Measure {
                             if k > rStart {
                                 for kEnd in (rStart + 1)...k {
                                     let n2Str = String(chars[rStart..<kEnd])
-                                    if let v2 = Cardinal.parseToInt(n2Str) {
-                                        ranges.append((kEnd, "\(v1)~\(v2)"))
+                                    if let v2 = parseMeasureNumber(n2Str, config: config) {
+                                        ranges.append((kEnd, "\(v1)\(config.rangeConnector)\(v2)"))
                                     }
                                 }
                             }
@@ -1131,8 +1517,7 @@ extension Measure {
                                 guard nuEnd <= n,
                                       String(chars[rangeEnd..<nuEnd]) == numerUnit
                                 else { continue }
-                                guard let numerEN = resolveUnit(numerUnit,
-                                        enableTimeEnglish: config.enableTimeEnglishMapping)
+                                guard let numerEN = resolveUnit(numerUnit, config: config)
                                       else { continue }
                                 out.append(Candidate(
                                     startIdx: i, endIdx: nuEnd,
@@ -1150,21 +1535,22 @@ extension Measure {
             // Try "unit subsumes 万/亿" path FIRST (e.g. 万伏特 → Wv),
             // then "万/亿 kept as plain suffix" path (e.g. 万吨 → 万吨).
             // Earlier-emitted candidate wins on tie cost.
-            if lookbehindOK && config.enableSpecialTilde {
+            if lookbehindOK && config.spokenRangeStyle == .expand {
                 for tildeKey in SpecialCardinal.tildePairs.keys.sorted(by: { $0.count > $1.count }) {
                     let tEnd = i + tildeKey.count
                     guard tEnd <= n,
                           String(chars[i..<tEnd]) == tildeKey,
                           let tildeVal = SpecialCardinal.tildePairs[tildeKey] else { continue }
+                    let rangeValue = SpecialCardinal.formatTildeRange(tildeVal, config: config)
                     // Path A: unit claims 万/亿 prefix (multi-char unit)
                     for unit in units where unit.count >= 2 {
                         let uEnd = tEnd + unit.count
                         guard uEnd <= n,
                               String(chars[tEnd..<uEnd]) == unit,
-                              let unitOut = resolveUnit(unit, enableTimeEnglish: config.enableTimeEnglishMapping) else { continue }
+                              let unitOut = resolveUnit(unit, config: config) else { continue }
                         out.append(Candidate(
                             startIdx: i, endIdx: uEnd,
-                            output: "\(tildeVal)\(unitSep(unitOut))\(unitOut)",
+                            output: "\(rangeValue)\(unitSep(unitOut))\(unitOut)",
                             weight: TaggerWeight.measure,
                             source: "measure_tilde_unit"
                         ))
@@ -1177,10 +1563,10 @@ extension Measure {
                                 let uEnd = tEnd + 1 + unit.count
                                 guard uEnd <= n,
                                       String(chars[(tEnd + 1)..<uEnd]) == unit,
-                                      let unitOut = resolveUnit(unit, enableTimeEnglish: config.enableTimeEnglishMapping) else { continue }
+                                      let unitOut = resolveUnit(unit, config: config) else { continue }
                                 out.append(Candidate(
                                     startIdx: i, endIdx: uEnd,
-                                    output: "\(tildeVal)\(c)\(unitSep(unitOut))\(unitOut)",
+                                    output: "\(rangeValue)\(c)\(unitSep(unitOut))\(unitOut)",
                                     weight: TaggerWeight.measure,
                                     source: "measure_tilde_suffix_unit"
                                 ))
@@ -1192,10 +1578,10 @@ extension Measure {
                         let uEnd = tEnd + unit.count
                         guard uEnd <= n,
                               String(chars[tEnd..<uEnd]) == unit,
-                              let unitOut = resolveUnit(unit, enableTimeEnglish: config.enableTimeEnglishMapping) else { continue }
+                              let unitOut = resolveUnit(unit, config: config) else { continue }
                         out.append(Candidate(
                             startIdx: i, endIdx: uEnd,
-                            output: "\(tildeVal)\(unitSep(unitOut))\(unitOut)",
+                            output: "\(rangeValue)\(unitSep(unitOut))\(unitOut)",
                             weight: TaggerWeight.measure,
                             source: "measure_tilde_unit"
                         ))
@@ -1219,10 +1605,13 @@ extension Measure {
                         let uEnd = formEnd + unit.count
                         guard uEnd <= n,
                               String(chars[formEnd..<uEnd]) == unit,
-                              let unitOut = resolveUnit(unit, enableTimeEnglish: config.enableTimeEnglishMapping) else { continue }
+                              let unitOut = resolveUnit(unit, config: config) else { continue }
+                        let output = config.spokenRangeStyle == .expand
+                            ? "\(SpecialCardinal.formatDashRange("\(leadStr)\(dashVal)", config: config))\(unitSep(unitOut))\(unitOut)"
+                            : String(chars[i..<uEnd])
                         out.append(Candidate(
                             startIdx: i, endIdx: uEnd,
-                            output: "\(leadStr)\(dashVal)\(unitSep(unitOut))\(unitOut)",
+                            output: output,
                             weight: TaggerWeight.measure,
                             source: "measure_dash_unit"
                         ))
@@ -1282,40 +1671,85 @@ extension Measure {
         // Single-digit + unit guard under !enable_0_to_9
         let isSingleDigit = numStr.count == 1 &&
             digitChars.contains(numStr.first!)
-        if !config.enable0To9 && isSingleDigit { return }
-
-        // Try Cardinal.parse first (handles 亿/万 segment-keeping).
-        // For single-digit, parse returns Chinese; use parseToInt instead.
-        var valueStr: String?
-        if isSingleDigit {
-            if let d = digitMap[numStr.first!] {
-                valueStr = String(d)
-            }
-        } else if let parsed = Cardinal.parse(numStr, enableMillion: config.enableMillion) {
-            valueStr = parsed
-        } else if let intVal = Cardinal.parseToInt(numStr) {
-            valueStr = "\(intVal)"
+        if !config.enable0To9 && isSingleDigit && config.unitOutputStyle == .chinese {
+            emitWithUnit(
+                chars: chars, n: n,
+                startIdx: startIdx, valueEnd: numEnd, valueStr: numStr,
+                units: units, out: &out, source: "measure_identity",
+                config: config
+            )
+            return
         }
-        guard let v = valueStr else { return }
+
+        guard let v = parseMeasureNumber(numStr, config: config) else { return }
         emitWithUnit(
             chars: chars, n: n,
             startIdx: startIdx, valueEnd: numEnd, valueStr: v,
             units: units, out: &out, source: "measure_cardinal",
-            enableTimeEnglish: config.enableTimeEnglishMapping
+            config: config
         )
+    }
+
+    private static func parseMeasureNumber(_ s: String,
+                                           config: ChineseITNConfig) -> String? {
+        Cardinal.parseFSTNumber(
+            s,
+            config: config,
+            allowSingleDigit: config.enable0To9 || config.unitOutputStyle == .symbol,
+            allowTerminalBareYiOrZhao: config.enable0To9 || config.unitOutputStyle == .symbol
+        )
+    }
+
+    private static func parseMeasureRangeEndpoint(_ s: String,
+                                                  config: ChineseITNConfig) -> String? {
+        if s.count == 1,
+           let first = s.first,
+           digitChars.contains(first),
+           !config.enable0To9,
+           config.unitOutputStyle == .chinese {
+            return s
+        }
+        if let kept = singleDigitMagnitudeOutput(
+            s,
+            convertDigit: config.enable0To9 || config.unitOutputStyle == .symbol
+        ) {
+            return kept
+        }
+        return Cardinal.parseFSTNumber(
+            s,
+            config: config,
+            allowSingleDigit: config.enable0To9 || config.unitOutputStyle == .symbol,
+            allowTerminalBareYiOrZhao: true
+        )
+    }
+
+    private static func singleDigitMagnitudeOutput(_ s: String,
+                                                   convertDigit: Bool) -> String? {
+        let chars = Array(s)
+        guard chars.count == 2,
+              let first = chars.first,
+              let last = chars.last,
+              digitChars.contains(first),
+              last == "万" || last == "萬" || last == "亿" || last == "億"
+        else { return nil }
+        let suffix = (last == "萬") ? "万" : (last == "億" ? "亿" : String(last))
+        if convertDigit, let d = digitMap[first] {
+            return "\(d)\(suffix)"
+        }
+        return "\(first)\(suffix)"
     }
 
     private static func emitWithUnit(
         chars: [Character], n: Int,
         startIdx: Int, valueEnd: Int, valueStr: String,
         units: [String], out: inout [Candidate], source: String,
-        enableTimeEnglish: Bool
+        config: ChineseITNConfig
     ) {
         for unit in units {
             let uEnd = valueEnd + unit.count
             guard uEnd <= n,
                   String(chars[valueEnd..<uEnd]) == unit else { continue }
-            guard let unitOut = resolveUnit(unit, enableTimeEnglish: enableTimeEnglish) else { continue }
+            guard let unitOut = resolveUnit(unit, config: config) else { continue }
             out.append(Candidate(
                 startIdx: startIdx, endIdx: uEnd,
                 output: "\(valueStr)\(unitSep(unitOut))\(unitOut)",
@@ -1325,6 +1759,46 @@ extension Measure {
             // Note: longest-first iteration; emit first match per unit then continue
             // to allow shorter alternatives too (lattice picks).
         }
+
+        guard valueEnd < n,
+              let prefixOut = magnitudePrefixOutput(chars[valueEnd]) else {
+            return
+        }
+        let unitStart = valueEnd + 1
+        for unit in units {
+            let uEnd = unitStart + unit.count
+            guard uEnd <= n,
+                  String(chars[unitStart..<uEnd]) == unit,
+                  let unitOut = resolveUnit(unit, config: config)
+            else { continue }
+            let prefixedUnitOut: String
+            if isChineseKeptUnit(unitOut) {
+                prefixedUnitOut = "\(chars[valueEnd])\(unitOut)"
+            } else {
+                prefixedUnitOut = "\(prefixOut)\(unitOut)"
+            }
+            out.append(Candidate(
+                startIdx: startIdx,
+                endIdx: uEnd,
+                output: "\(valueStr)\(unitSep(prefixedUnitOut))\(prefixedUnitOut)",
+                weight: TaggerWeight.measure,
+                source: "\(source)_prefixed_unit"
+            ))
+        }
+    }
+
+    private static func magnitudePrefixOutput(_ ch: Character) -> String? {
+        switch ch {
+        case "万", "萬": return "W"
+        case "亿", "億": return "00M"
+        case "兆": return "T"
+        default: return nil
+        }
+    }
+
+    private static func isChineseKeptUnit(_ unitOut: String) -> Bool {
+        guard let first = unitOut.unicodeScalars.first else { return false }
+        return first.value >= 0x4E00 && first.value <= 0x9FFF
     }
 }
 
@@ -1595,14 +2069,12 @@ extension Cardinal {
     /// cardinal.
     private static func parseOne(_ s: String,
                                  config: ChineseITNConfig) -> String? {
-        if s.count == 1, let ch = s.first, digitChars.contains(ch) {
-            if config.enable0To9, let d = digitMap[ch] {
-                return String(d)
-            }
-            return nil  // single digit not allowed
-        }
-        // Use enableMillion-aware parse for keep-万-suffix decision.
-        return parse(s, enableMillion: config.enableMillion)
+        parseFSTNumber(
+            s,
+            config: config,
+            allowSingleDigit: config.enable0To9,
+            allowTerminalBareYiOrZhao: config.enable0To9
+        )
     }
 }
 
